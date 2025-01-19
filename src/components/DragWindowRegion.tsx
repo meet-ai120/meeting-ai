@@ -4,6 +4,7 @@ import {
   minimizeWindow,
 } from "@/helpers/window_helpers";
 import React, { type ReactNode } from "react";
+import ToggleTheme from "./ToggleTheme";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -11,14 +12,15 @@ interface DragWindowRegionProps {
 
 export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   return (
-    <div className="flex w-screen items-stretch justify-between">
-      <div className="draglayer mt-5 w-full">
+    <div className="flex h-8 w-screen items-stretch justify-between">
+      <div className="draglayer w-full">
         {/* {title && (
           <div className="flex flex-1 select-none whitespace-nowrap p-2 text-xs text-gray-400">
             {title}
           </div>
         )} */}
       </div>
+      <ToggleTheme />
       {/* <WindowButtons /> */}
     </div>
   );

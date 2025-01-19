@@ -2,6 +2,7 @@ import { createRoute } from "@tanstack/react-router";
 import HomePage from "../pages/HomePage";
 import { RootRoute } from "./__root";
 import AboutPage from "@/pages/AboutPage";
+import SignUp from "@/pages/SignUp";
 
 // TODO: Steps to add a new route:
 // 1. Create a new page component in the '../pages/' directory (e.g., NewPage.tsx)
@@ -34,4 +35,14 @@ export const AboutRoute = createRoute({
   component: AboutPage,
 });
 
-export const rootTree = RootRoute.addChildren([HomeRoute, AboutRoute]);
+export const SignUpRoute = createRoute({
+  getParentRoute: () => RootRoute,
+  path: "/signup",
+  component: SignUp,
+});
+
+export const rootTree = RootRoute.addChildren([
+  HomeRoute,
+  AboutRoute,
+  SignUpRoute,
+]);

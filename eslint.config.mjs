@@ -25,6 +25,7 @@ export default [
     rules: {
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off", // Also disable the TypeScript version
+      "react/react-in-jsx-scope": "off",
     },
   },
 ];
