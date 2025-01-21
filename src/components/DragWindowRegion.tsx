@@ -8,20 +8,28 @@ import { Button } from "./ui/button";
 
 import { toggleTheme } from "@/helpers/theme_helpers";
 import { Input } from "./ui/input";
-import { Moon, Search, Sun } from "lucide-react";
+import { ChevronLeft, Moon, Search, Sun } from "lucide-react";
 import { UserNav } from "./UserNav";
 import { Label } from "./ui/label";
+import { useRouter } from "@tanstack/react-router";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
 }
 
 export default function DragWindowRegion({ title }: DragWindowRegionProps) {
+  const router = useRouter();
+
   return (
     <div className="draglayer flex w-screen items-center items-stretch justify-between p-2 pr-4">
-      <div className="flex-1">
-        {/* Meeting AI */}
-        {/* You can add a logo or site title here */}
+      <div className="no-drag ml-20 flex-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.navigate({ to: "/" })}
+        >
+          <ChevronLeft size="sm" />
+        </Button>
       </div>
       <div className="no-drag flex items-center space-x-4">
         <div className="relative">

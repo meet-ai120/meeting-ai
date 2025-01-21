@@ -3,10 +3,19 @@ import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { formatDate } from "@/lib/format";
 import { Meeting } from "@/lib/supabase";
+import { MeetingRoute } from "@/routes/routes";
+import { useNavigate } from "@tanstack/react-router";
 
 export function MeetingItem({ meeting }: { meeting: Meeting }) {
+  const navigate = useNavigate();
   return (
     <button
+      onClick={() => {
+        navigate({
+          to: "/meeting/$meetingId",
+          params: { meetingId: meeting.id.toString() },
+        });
+      }}
       className={cn(
         "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
       )}
