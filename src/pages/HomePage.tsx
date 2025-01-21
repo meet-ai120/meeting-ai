@@ -3,16 +3,10 @@ import ToggleTheme from "@/components/ToggleTheme";
 import { useTranslation } from "react-i18next";
 import LangToggle from "@/components/LangToggle";
 import { Meeting, supabase } from "@/lib/supabase";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { MeetingRoute } from "@/routes/routes";
 import { MeetingItem } from "@/components/MeetingItem";
 
@@ -91,7 +85,7 @@ const meetings: Meeting[] = [
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const { user } = useCurrentUser();
+  const { user, loading } = useCurrentUser();
   const navigate = useNavigate();
 
   // const handleCreateMeeting = async () => {
@@ -110,9 +104,9 @@ export default function HomePage() {
   //   }
   // };
 
-  console.log(meetings);
-
-  return (
+  return !user && !loading ? (
+    <Navigate to="/signup" />
+  ) : (
     <div className="flex h-full flex-col">
       <div className="h-40 w-full bg-slate-200" />
       <hr className="w-full" />

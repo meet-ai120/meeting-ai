@@ -36,5 +36,15 @@ export function useCurrentUser() {
     };
   }, []);
 
-  return { user, loading };
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // The auth state change listener will automatically update the user state
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
+  };
+
+  return { user, loading, logout };
 }

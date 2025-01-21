@@ -7,6 +7,8 @@ import { updateAppLanguage } from "./helpers/language_helpers";
 import { router } from "./routes/router";
 import { RouterProvider } from "@tanstack/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCurrentUser } from "./hooks/useCurrentUser";
+import SignUp from "./pages/SignUp";
 
 export default function App() {
   const { i18n } = useTranslation();

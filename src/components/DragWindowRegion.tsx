@@ -22,9 +22,10 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
 
   return (
     <div className="draglayer flex w-screen items-center items-stretch justify-between p-2 pr-4">
-      <div className="no-drag ml-20 flex-1">
+      <div className="ml-20 flex-1">
         <Button
           variant="outline"
+          className="no-drag"
           size="sm"
           onClick={() => router.navigate({ to: "/" })}
         >
