@@ -9,13 +9,13 @@ export default function BaseLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="flex h-screen flex-col">
       <DragWindowRegion title="electron-shadcn" />
       {/* <NavigationMenu /> */}
       {/* <ToggleTheme /> */}
 
       <hr />
-      <main className="p-4">{children}</main>
-    </>
+      <main className="flex-1 overflow-hidden">{children}</main>
+    </div>
   );
 }

@@ -10,6 +10,7 @@ import { toggleTheme } from "@/helpers/theme_helpers";
 import { Input } from "./ui/input";
 import { Moon, Search, Sun } from "lucide-react";
 import { UserNav } from "./UserNav";
+import { Label } from "./ui/label";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -22,24 +23,17 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
         {/* Meeting AI */}
         {/* You can add a logo or site title here */}
       </div>
-      <div className="flex items-center space-x-4">
-        <div className="no-drag relative">
+      <div className="no-drag flex items-center space-x-4">
+        <div className="relative">
+          <Label htmlFor="search" className="sr-only">
+            Search
+          </Label>
           <Input
-            type="search"
-            placeholder="Search..."
-            // value={search}
-            // onChange={(e) => setSearch(e.target.value)}
-            className="pr-8"
+            id="search"
+            placeholder="Search the docs..."
+            className="pl-8"
           />
-          <Button
-            type="submit"
-            variant="ghost"
-            size="icon"
-            className="absolute right-0 top-0"
-          >
-            <Search className="h-4 w-4" />
-            <span className="sr-only">Search</span>
-          </Button>
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
         </div>
         <UserNav />
       </div>

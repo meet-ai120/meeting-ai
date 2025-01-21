@@ -14,10 +14,9 @@ export const supabase = createClient(supabaseUrl, SUPABASE_KEY, {
 export interface Meeting {
   id: number; // Primary key
   user_id: string; // Foreign key referencing the user's ID
-  title: string; // Title of the meeting
-  description?: string; // Optional description of the meeting
-  start_time: string; // Start time of the meeting in ISO format
-  end_time: string; // End time of the meeting in ISO format
   created_at: string; // Timestamp when the meeting was created
-  updated_at: string; // Timestamp when the meeting was last updated
+  title: string; // Title of the meeting
+  description: string; // Optional description of the meeting
+  transcript: string; // Transcript of the meeting
+  notes: string; // Notes of the meeting
 }
