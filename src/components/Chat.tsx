@@ -77,7 +77,7 @@ export function Chat() {
 
   return (
     <>
-      <Card className="flex h-full flex-col">
+      <Card className="flex h-full flex-col rounded-none border-none">
         <CardHeader className="flex flex-row items-center">
           <div className="flex items-center space-x-4">
             <Avatar>

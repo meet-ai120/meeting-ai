@@ -6,6 +6,7 @@ import "./localization/i18n";
 import { updateAppLanguage } from "./helpers/language_helpers";
 import { router } from "./routes/router";
 import { RouterProvider } from "@tanstack/react-router";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function App() {
   const { i18n } = useTranslation();
@@ -21,6 +22,8 @@ export default function App() {
 const root = createRoot(document.getElementById("app")!);
 root.render(
   <React.StrictMode>
-    <App />
+    <TooltipProvider>
+      <App />
+    </TooltipProvider>
   </React.StrictMode>,
 );
