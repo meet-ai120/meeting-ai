@@ -4,7 +4,12 @@ import {
   minimizeWindow,
 } from "@/helpers/window_helpers";
 import React, { type ReactNode } from "react";
-import ToggleTheme from "./ToggleTheme";
+import { Button } from "./ui/button";
+
+import { toggleTheme } from "@/helpers/theme_helpers";
+import { Input } from "./ui/input";
+import { Moon, Search, Sun } from "lucide-react";
+import { UserNav } from "./UserNav";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -12,16 +17,32 @@ interface DragWindowRegionProps {
 
 export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   return (
-    <div className="flex h-8 w-screen items-stretch justify-between">
-      <div className="draglayer w-full">
-        {/* {title && (
-          <div className="flex flex-1 select-none whitespace-nowrap p-2 text-xs text-gray-400">
-            {title}
-          </div>
-        )} */}
+    <div className="draglayer flex w-screen items-center items-stretch justify-between p-2 pr-4">
+      <div className="flex-1">
+        {/* Meeting AI */}
+        {/* You can add a logo or site title here */}
       </div>
-      <ToggleTheme />
-      {/* <WindowButtons /> */}
+      <div className="flex items-center space-x-4">
+        <div className="no-drag relative">
+          <Input
+            type="search"
+            placeholder="Search..."
+            // value={search}
+            // onChange={(e) => setSearch(e.target.value)}
+            className="pr-8"
+          />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0"
+          >
+            <Search className="h-4 w-4" />
+            <span className="sr-only">Search</span>
+          </Button>
+        </div>
+        <UserNav />
+      </div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export default function BaseLayout({
       {/* <ToggleTheme /> */}
 
       <hr />
-      <main className="">{children}</main>
+      <main className="p-4">{children}</main>
     </>
   );
 }

@@ -26,6 +26,7 @@ export default [
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off", // Also disable the TypeScript version
       "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/ban-ts-comment": "off", // Disable @ts-ignore warnings
     },
   },
 ];
