@@ -7,6 +7,7 @@ import { AIVoiceInput } from "@/components/VoiceInput";
 import { Chat } from "@/components/Chat";
 import { MinimalTiptapEditor } from "@/components/minimal-tiptap";
 import { Content } from "@tiptap/react";
+import TranscriptPopover from "@/components/TranscriptPopover";
 
 export default function MeetingPage() {
   const params = MeetingRoute.useParams();
@@ -16,7 +17,7 @@ export default function MeetingPage() {
   return (
     <div className="flex h-full w-full">
       {/* Notes area */}
-      <div className="flex w-2/3 flex-col overflow-hidden bg-gray-100">
+      <div className="relative flex w-2/3 flex-col overflow-hidden bg-gray-100">
         <MinimalTiptapEditor
           value={value}
           onChange={setValue}
@@ -28,6 +29,9 @@ export default function MeetingPage() {
           editable={true}
           editorClassName=""
         />
+        <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
+          <TranscriptPopover />
+        </div>
       </div>
       <div className="w-1/3 border-l">
         <Chat />
