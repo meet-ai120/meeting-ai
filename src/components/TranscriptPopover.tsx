@@ -54,6 +54,14 @@ export default function TranscriptPopover({
             )}
           </Button>
           <Button variant="outline">Transcript</Button>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            // variant=""
+          >
+            Enhance
+          </Button>
         </div>
       </PopoverTrigger>
       <PopoverContent className="flex h-[500px] w-[450px] flex-col overflow-hidden p-0">

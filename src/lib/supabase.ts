@@ -31,3 +31,8 @@ export interface TextPromptBody {
   note: string;
   chatQuestion: string;
 }
+
+export const sendTextPrompt = async (body: TextPromptBody) =>
+  await supabase.functions.invoke(EDGE_FUNCTIONS.textPrompt, {
+    body,
+  });

@@ -22,8 +22,9 @@
   - This result should be updated in supabase
 
 - Chat flow
-  - Send chat via edge function
-  - Edge function updates DB with new message
-  - AI api is called based on new message
-  - Result from api is updated in DB
-  - Live data is updated in chat locally
+  - When user sends chat, store it in DB
+  - Invoke edge function with whole meeting data
+  - Edge function takes needed data and constructs prompt
+  - Calls AI api
+  - Responds with result
+  - Result is stored into DB locally

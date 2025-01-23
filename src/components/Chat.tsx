@@ -7,7 +7,13 @@ import { Check, Loader2, Plus, Send } from "lucide-react";
 import { Input } from "./ui/input";
 
 import { cn } from "@/lib/utils";
-import { ChatItem, EDGE_FUNCTIONS, Meeting, supabase } from "@/lib/supabase";
+import {
+  ChatItem,
+  EDGE_FUNCTIONS,
+  Meeting,
+  sendTextPrompt,
+  supabase,
+} from "@/lib/supabase";
 import { useCallback, useEffect, useState } from "react";
 
 const users = [
@@ -54,8 +60,10 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   };
 
@@ -79,6 +87,7 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
   );
 
   const handleSend = async () => {
+    if (!meeting) return;
     const newChat: ChatItem[] = [...chat, { actor: "user", content: input }];
     setChat(newChat);
     setIsLoading(true);
@@ -87,30 +96,26 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
       console.log("updated chat history with user", res);
     });
 
-    supabase.functions
-      .invoke(EDGE_FUNCTIONS.textPrompt, {
-        body: {
-          meeting: meeting,
-          type: "chat",
-          note: "",
-          chatQuestion: input,
-        },
-      })
-      .then((res) => {
-        console.log("AI response", res);
+    sendTextPrompt({
+      meeting: meeting,
+      type: "chat",
+      note: "",
+      chatQuestion: input,
+    }).then((res) => {
+      console.log("AI response", res);
 
-        setChat((chat) => {
-          const newChat: ChatItem[] = [
-            ...chat,
-            { actor: "agent", content: res.data.response },
-          ];
-          updateChatHistory(newChat).then((res) => {
-            console.log("updated chat history with agent", res);
-          });
-          return newChat;
+      setChat((chat) => {
+        const newChat: ChatItem[] = [
+          ...chat,
+          { actor: "agent", content: res.data.response },
+        ];
+        updateChatHistory(newChat).then((res) => {
+          console.log("updated chat history with agent", res);
         });
-        setIsLoading(false);
+        return newChat;
       });
+      setIsLoading(false);
+    });
   };
 
   return (
