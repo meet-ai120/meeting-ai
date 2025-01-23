@@ -18,8 +18,8 @@
 ## Data flow
 - Note flow
   - Update note locally
-  - To enhance call edge function, it should take note and ehance it via api, then update DB with new note
-  - Live data should update note locally
+  - To enhance call edge function it should take note, transcript and chat from DB and enhance it via api then return result
+  - This result should be updated in supabase
 
 - Chat flow
   - Send chat via edge function

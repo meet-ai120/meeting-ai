@@ -52,7 +52,6 @@ type User = (typeof users)[number];
 
 export function Chat() {
   const [open, setOpen] = React.useState(false);
-  const [selectedUsers, setSelectedUsers] = React.useState<User[]>([]);
 
   const [messages, setMessages] = React.useState([
     {
@@ -78,18 +77,20 @@ export function Chat() {
   return (
     <>
       <Card className="flex h-full flex-col rounded-none border-none">
-        <CardHeader className="flex flex-row items-center">
+        <CardHeader className="flex flex-row items-center p-3">
           <div className="flex items-center space-x-4">
             <Avatar>
               <AvatarImage src="/avatars/01.png" alt="Image" />
-              <AvatarFallback>OM</AvatarFallback>
+              <AvatarFallback>AI</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium leading-none">Sofia Davis</p>
-              <p className="text-sm text-muted-foreground">m@example.com</p>
+              <p className="text-sm font-medium leading-none">Meeting AI</p>
+              <p className="text-sm text-muted-foreground">
+                Personal assistent
+              </p>
             </div>
           </div>
-          <TooltipProvider delayDuration={0}>
+          {/* <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -104,9 +105,9 @@ export function Chat() {
               </TooltipTrigger>
               <TooltipContent sideOffset={10}>New message</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
+          </TooltipProvider> */}
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto">
+        <CardContent className="flex-1 overflow-y-auto border-t pt-3">
           <div className="space-y-4">
             {messages.map((message, index) => (
               <div
@@ -154,7 +155,7 @@ export function Chat() {
           </form>
         </CardFooter>
       </Card>
-      <Dialog open={open} onOpenChange={setOpen}>
+      {/* <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="gap-0 p-0 outline-none">
           <DialogHeader className="px-4 pb-4 pt-5">
             <DialogTitle>New message</DialogTitle>
@@ -192,7 +193,7 @@ export function Chat() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 }

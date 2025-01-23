@@ -1,9 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_KEY } from "./const";
+import { Database, Tables } from "./supabase.types";
+import { useQuery } from "@tanstack/react-query";
 
 const supabaseUrl = "https://svitvmdryoqgopmseuhd.supabase.co";
 
-export const supabase = createClient(supabaseUrl, SUPABASE_KEY, {
+export const supabase = createClient<Database>(supabaseUrl, SUPABASE_KEY, {
   auth: {
     autoRefreshToken: false,
     persistSession: true,
@@ -11,15 +13,9 @@ export const supabase = createClient(supabaseUrl, SUPABASE_KEY, {
 });
 
 // props: {"title": "Meeting Type Definition", "runQuery": "false"}
-export interface Meeting {
-  id: number; // Primary key
-  user_id: string; // Foreign key referencing the user's ID
-  created_at: string; // Timestamp when the meeting was created
-  title: string; // Title of the meeting
-  description: string; // Optional description of the meeting
-  transcript: string; // Transcript of the meeting
-  notes: string; // Notes of the meeting
-}
+export type Meeting = Tables<"meeting">;
+
+// export type ChatHistory =
 
 export const EDGE_FUNCTIONS = {
   updateTranscript: "update-transcript",
