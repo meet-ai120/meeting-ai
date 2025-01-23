@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Download, Mic, Square } from "lucide-react";
+import { EDGE_FUNCTIONS, supabase } from "@/lib/supabase";
 
 const messages = [
   "The funny thing is I didn't unfollow Elon at all. ",
@@ -12,12 +13,28 @@ const messages = [
   "Summer Time Line in, like, a couple of days. So I assume he, like, did something, either block and unblocked or, like, funny thing is I didn't unfollow Elon at all. One of the headlines It that Marques and Elon unfollowed each other on Twitter. I woke up to find that ",
 ];
 
-export default function TranscriptPopover() {
+interface TranscriptPopoverProps {
+  meetingId: string;
+}
+
+export default function TranscriptPopover({
+  meetingId,
+}: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
 
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsRecording(!isRecording);
+  };
+
+  const handleUpdate = async (transcript: string) => {
+    const { data, error } = await supabase.functions.invoke(
+      EDGE_FUNCTIONS.updateTranscript,
+      {
+        body: JSON.stringify({ meetingId: meetingId, transcript: transcript }),
+      },
+    );
+    console.log(data, error);
   };
 
   return (
@@ -42,7 +59,10 @@ export default function TranscriptPopover() {
       <PopoverContent className="flex h-[500px] w-[450px] flex-col overflow-hidden p-0">
         <div className="flex items-center justify-between p-2 px-4">
           <span className="text-lg font-bold">Transcript</span>
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => handleUpdate(messages.join(" "))}
+          >
             <Download />
           </Button>
         </div>

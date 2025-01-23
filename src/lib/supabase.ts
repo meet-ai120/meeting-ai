@@ -20,3 +20,7 @@ export interface Meeting {
   transcript: string; // Transcript of the meeting
   notes: string; // Notes of the meeting
 }
+
+export const EDGE_FUNCTIONS = {
+  updateTranscript: "update-transcript",
+};

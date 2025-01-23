@@ -12,9 +12,16 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigate } from "@tanstack/react-router";
 
 export function UserNav() {
+  const navigate = useNavigate();
   const { logout, user } = useCurrentUser();
+
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/signup" });
+  };
 
   return (
     <DropdownMenu>
@@ -55,7 +62,7 @@ export function UserNav() {
           {/* <DropdownMenuItem>New Team</DropdownMenuItem> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
+        <DropdownMenuItem onClick={handleLogout}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

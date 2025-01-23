@@ -12,15 +12,19 @@ import TranscriptPopover from "@/components/TranscriptPopover";
 export default function MeetingPage() {
   const params = MeetingRoute.useParams();
   const meetingId = params.meetingId;
-  const [value, setValue] = useState<Content>("");
+  const [note, setNote] = useState<Content>("");
+
+  const handleUpdateNote = async (note: Content) => {
+    // await supabase.from()
+  };
 
   return (
     <div className="flex h-full w-full">
       {/* Notes area */}
       <div className="relative flex w-2/3 flex-col overflow-hidden bg-gray-100">
         <MinimalTiptapEditor
-          value={value}
-          onChange={setValue}
+          value={note}
+          onChange={setNote}
           className="flex h-full w-full flex-col overflow-hidden"
           editorContentClassName="p-5 overflow-y-auto"
           output="json"
@@ -30,7 +34,7 @@ export default function MeetingPage() {
           editorClassName=""
         />
         <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
-          <TranscriptPopover />
+          <TranscriptPopover meetingId={"5"} />
         </div>
       </div>
       <div className="w-1/3 border-l">

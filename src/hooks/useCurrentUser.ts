@@ -38,6 +38,7 @@ export function useCurrentUser() {
 
   const logout = async () => {
     try {
+      console.log("LOGOUT");
       await supabase.auth.signOut();
       // The auth state change listener will automatically update the user state
     } catch (error) {

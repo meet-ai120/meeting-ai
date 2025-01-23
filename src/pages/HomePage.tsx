@@ -104,6 +104,8 @@ export default function HomePage() {
   //   }
   // };
 
+  console.log(user);
+
   return !user && !loading ? (
     <Navigate to="/signup" />
   ) : (
