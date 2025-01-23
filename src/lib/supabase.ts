@@ -15,8 +15,19 @@ export const supabase = createClient<Database>(supabaseUrl, SUPABASE_KEY, {
 // props: {"title": "Meeting Type Definition", "runQuery": "false"}
 export type Meeting = Tables<"meeting">;
 
-// export type ChatHistory =
+export interface ChatItem {
+  actor: "user" | "agent";
+  content: string;
+}
 
 export const EDGE_FUNCTIONS = {
   updateTranscript: "update-transcript",
+  textPrompt: "text-prompt",
 };
+
+export interface TextPromptBody {
+  meeting: Meeting;
+  type: "summary" | "chat";
+  note: string;
+  chatQuestion: string;
+}

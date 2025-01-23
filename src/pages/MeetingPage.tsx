@@ -1,4 +1,4 @@
-import { Meeting } from "@/lib/supabase";
+import { ChatItem, Meeting } from "@/lib/supabase";
 import { Link, useParams } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
@@ -59,7 +59,14 @@ export default function MeetingPage() {
         </div>
       </div>
       <div className="w-1/3 border-l">
-        <Chat />
+        <Chat
+          meeting={meeting.data?.data}
+          chatHistory={
+            (meeting.data?.data?.chat_history
+              ? JSON.parse(meeting.data?.data?.chat_history as string)
+              : []) as ChatItem[]
+          }
+        />
       </div>
     </div>
   );

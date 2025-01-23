@@ -2,23 +2,13 @@ import * as React from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
-import { Check, Plus, Send } from "lucide-react";
+
+import { Check, Loader2, Plus, Send } from "lucide-react";
 import { Input } from "./ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+
 import { cn } from "@/lib/utils";
+import { ChatItem, EDGE_FUNCTIONS, Meeting, supabase } from "@/lib/supabase";
+import { useCallback, useEffect, useState } from "react";
 
 const users = [
   {
@@ -50,29 +40,78 @@ const users = [
 
 type User = (typeof users)[number];
 
-export function Chat() {
-  const [open, setOpen] = React.useState(false);
+interface ChatProps {
+  chatHistory: ChatItem[];
+  meeting?: Meeting | null;
+}
 
-  const [messages, setMessages] = React.useState([
-    {
-      role: "agent",
-      content: "Hi, how can I help you today?",
-    },
-    {
-      role: "user",
-      content: "Hey, I'm having trouble with my account.",
-    },
-    {
-      role: "agent",
-      content: "What seems to be the problem?",
-    },
-    {
-      role: "user",
-      content: "I can't log in.",
-    },
-  ]);
+export function Chat({ chatHistory, meeting }: ChatProps) {
   const [input, setInput] = React.useState("");
   const inputLength = input.trim().length;
+  const [chat, setChat] = useState<ChatItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const chatContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    if (chat.length === 0) {
+      setChat(chatHistory);
+    }
+    scrollToBottom();
+  }, [chatHistory, chat]);
+
+  const updateChatHistory = useCallback(
+    async (newChat: ChatItem[]) =>
+      await supabase
+        .from("meeting")
+        .update({
+          chat_history: JSON.stringify(newChat),
+        })
+        .eq("id", meeting?.id || 0)
+        .select(),
+    [meeting?.id],
+  );
+
+  const handleSend = async () => {
+    const newChat: ChatItem[] = [...chat, { actor: "user", content: input }];
+    setChat(newChat);
+    setIsLoading(true);
+
+    updateChatHistory(newChat).then((res) => {
+      console.log("updated chat history with user", res);
+    });
+
+    supabase.functions
+      .invoke(EDGE_FUNCTIONS.textPrompt, {
+        body: {
+          meeting: meeting,
+          type: "chat",
+          note: "",
+          chatQuestion: input,
+        },
+      })
+      .then((res) => {
+        console.log("AI response", res);
+
+        setChat((chat) => {
+          const newChat: ChatItem[] = [
+            ...chat,
+            { actor: "agent", content: res.data.response },
+          ];
+          updateChatHistory(newChat).then((res) => {
+            console.log("updated chat history with agent", res);
+          });
+          return newChat;
+        });
+        setIsLoading(false);
+      });
+  };
 
   return (
     <>
@@ -86,7 +125,7 @@ export function Chat() {
             <div>
               <p className="text-sm font-medium leading-none">Meeting AI</p>
               <p className="text-sm text-muted-foreground">
-                Personal assistent
+                Personal assistant
               </p>
             </div>
           </div>
@@ -107,14 +146,17 @@ export function Chat() {
             </Tooltip>
           </TooltipProvider> */}
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto border-t pt-3">
+        <CardContent
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto border-t pt-3"
+        >
           <div className="space-y-4">
-            {messages.map((message, index) => (
+            {chat.map((message, index) => (
               <div
                 key={index}
                 className={cn(
                   "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-                  message.role === "user"
+                  message.actor === "user"
                     ? "ml-auto bg-primary text-primary-foreground"
                     : "bg-muted",
                 )}
@@ -122,6 +164,17 @@ export function Chat() {
                 {message.content}
               </div>
             ))}
+            {isLoading ? (
+              <div
+                className={cn(
+                  "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
+
+                  "bg-muted",
+                )}
+              >
+                Typing...
+              </div>
+            ) : null}
           </div>
         </CardContent>
         <CardFooter>
@@ -129,13 +182,7 @@ export function Chat() {
             onSubmit={(event) => {
               event.preventDefault();
               if (inputLength === 0) return;
-              setMessages([
-                ...messages,
-                {
-                  role: "user",
-                  content: input,
-                },
-              ]);
+              handleSend();
               setInput("");
             }}
             className="flex w-full items-center space-x-2"
