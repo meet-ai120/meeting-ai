@@ -1,4 +1,4 @@
-import { ChatItem, Meeting } from "@/lib/supabase";
+import { ChatItem, Meeting, sendTextPrompt } from "@/lib/supabase";
 import { Link, useParams } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
@@ -9,7 +9,7 @@ import { MinimalTiptapEditor } from "@/components/minimal-tiptap";
 import { Content, Editor } from "@tiptap/react";
 import TranscriptPopover from "@/components/TranscriptPopover";
 import debounce from "lodash.debounce";
-import { useMeeting } from "@/lib/queries";
+import { QUERY_KEYS, queryClient, useMeeting } from "@/lib/queries";
 
 export default function MeetingPage() {
   const params = MeetingRoute.useParams();
@@ -17,15 +17,19 @@ export default function MeetingPage() {
   const [note, setNote] = useState<Content>("");
   const meeting = useMeeting(meetingId);
   const editorRef = useRef<Editor | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  console.log("meeting", meeting.data?.data);
 
   useEffect(() => {
-    if (meeting.data?.data && editorRef.current) {
+    if (meeting.data?.data && editorRef.current && note === "") {
       editorRef.current.commands.setContent(meeting.data.data.notes);
+      setNote(meeting.data.data.notes);
     }
   }, [meeting.data?.data]);
 
   const debouncedUpdateNote = useRef(
     debounce(async (note: Content) => {
+      console.log("Updating supabase", note);
       await supabase
         .from("meeting")
         .update({
@@ -38,6 +42,29 @@ export default function MeetingPage() {
   const handleUpdateNote = async (note: Content) => {
     setNote(note);
     debouncedUpdateNote(note);
+  };
+  console.log("note", note);
+
+  const handleEnhance = async () => {
+    if (!meeting.data?.data) return;
+    setIsEnhancing(true);
+    console.log("NOTE FOR ENHANCE", note);
+    const res = await sendTextPrompt({
+      meeting: meeting.data?.data,
+      type: "summary",
+      note: note?.toString() || "",
+      chatQuestion: "",
+    });
+    const response = res.data.response;
+    if (response) {
+      editorRef.current?.commands.setContent(response);
+      setNote(meeting.data.data.notes);
+      debouncedUpdateNote(response);
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.meeting, meetingId],
+      });
+    }
+    setIsEnhancing(false);
   };
 
   return (
@@ -53,9 +80,10 @@ export default function MeetingPage() {
           placeholder="Type your description here..."
           autofocus={true}
           editable={true}
+          disabled={isEnhancing}
         />
         <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
-          <TranscriptPopover meetingId={"5"} />
+          <TranscriptPopover onEnhance={handleEnhance} meetingId={meetingId} />
         </div>
       </div>
       <div className="w-1/3 border-l">

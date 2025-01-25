@@ -14,7 +14,8 @@ import { SectionFive } from "./components/section/five";
 import { LinkBubbleMenu } from "./components/bubble-menu/link-bubble-menu";
 import { useMinimalTiptapEditor } from "./hooks/use-minimal-tiptap";
 import { MeasuredContainer } from "./components/measured-container";
-
+import { Markdown } from "tiptap-markdown";
+import StarterKit from "@tiptap/starter-kit";
 export interface MinimalTiptapProps
   extends Omit<UseMinimalTiptapEditorProps, "onUpdate"> {
   value?: Content;
@@ -22,6 +23,7 @@ export interface MinimalTiptapProps
   className?: string;
   editorContentClassName?: string;
   editorRef?: React.MutableRefObject<Editor | null>;
+  disabled?: boolean;
 }
 
 const Toolbar = ({ editor }: { editor: Editor }) => (
@@ -72,12 +74,21 @@ export const MinimalTiptapEditor = React.forwardRef<
   MinimalTiptapProps
 >(
   (
-    { value, onChange, className, editorContentClassName, editorRef, ...props },
+    {
+      value,
+      onChange,
+      className,
+      editorContentClassName,
+      editorRef,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     const editor = useMinimalTiptapEditor({
       value,
-      onUpdate: onChange,
+      onUpdate: () => onChange?.(editor?.storage.markdown.getMarkdown()),
+      extensions: [StarterKit, Markdown],
       ...props,
     });
 
@@ -109,6 +120,7 @@ export const MinimalTiptapEditor = React.forwardRef<
             editorContentClassName,
           )}
           onClick={() => editor.chain().focus().run()}
+          disabled={disabled}
         />
         <LinkBubbleMenu editor={editor} />
       </MeasuredContainer>

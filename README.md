@@ -9,6 +9,8 @@
 
 - discuss data flow
 
+- Fix data storing, right now regularly invalidating queries. Make it so that meeting data is stored locally and only updates should be sent to DB. When error we can can refetch
+
 
 ## Day 1
 - Create a UI

@@ -25,7 +25,9 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
           <div className="flex items-center gap-2">
             <div className="font-semibold">{meeting.title}</div>
           </div>
-          <div className={"ml-auto text-xs"}>{formatDate(new Date())}</div>
+          <div className={"ml-auto text-xs"}>
+            {formatDate(meeting.created_at)}
+          </div>
         </div>
         {/* <div className="text-xs font-medium">{meeting.description}</div> */}
       </div>

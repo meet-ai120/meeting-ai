@@ -89,24 +89,23 @@ export default function HomePage() {
   const { t } = useTranslation();
   const { user, loading } = useCurrentUser();
   const navigate = useNavigate();
-
-  // const handleCreateMeeting = async () => {
-  //   const nextNumber = meetings.length + 1;
-  //   const { data, error } = await supabase
-  //     .from("meeting")
-  //     .insert([{ title: `Meeting #${nextNumber}` }])
-  //     .select()
-  //     .single();
-
-  //   if (data) {
-  //     navigate({
-  //       to: "/meeting/$meetingId",
-  //       params: { meetingId: data.id.toString() },
-  //     });
-  //   }
-  // };
-
   const { data: meetings, isLoading: meetingsLoading } = useMeetings();
+
+  const handleCreateMeeting = async () => {
+    const nextNumber = meetings?.data?.length || 0 + 1;
+    const { data, error } = await supabase
+      .from("meeting")
+      .insert([{ title: `Meeting #${nextNumber}` }])
+      .select()
+      .single();
+
+    if (data) {
+      navigate({
+        to: "/meeting/$meetingId",
+        params: { meetingId: data.id.toString() },
+      });
+    }
+  };
 
   return !user && !loading ? (
     <Navigate to="/signup" />
@@ -114,7 +113,7 @@ export default function HomePage() {
     <div className="flex h-full flex-col">
       <div className="h-40 w-full bg-slate-200" />
       <hr className="w-full" />
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex flex-1 flex-col items-center overflow-auto p-4">
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2">
           {meetingsLoading ? (
             <>
@@ -128,6 +127,9 @@ export default function HomePage() {
             ))
           )}
         </div>
+        <Button className="mt-4" onClick={handleCreateMeeting}>
+          Create New Meeting
+        </Button>
       </div>
     </div>
   );

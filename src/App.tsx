@@ -12,9 +12,13 @@ import SignUp from "./pages/SignUp";
 import { supabase } from "./lib/supabase";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queries";
+import { useChat } from "ai/react";
 
 export default function App() {
   const { i18n } = useTranslation();
+  // const { messages, input, handleInputChange, handleSubmit } = useChat({
+  //   api: "http://localhost:54321/functions/v1/vercel-ai",
+  // });
 
   // No need for real time changes now
 

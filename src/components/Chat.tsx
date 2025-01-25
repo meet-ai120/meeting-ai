@@ -15,36 +15,8 @@ import {
   supabase,
 } from "@/lib/supabase";
 import { useCallback, useEffect, useState } from "react";
-
-const users = [
-  {
-    name: "Olivia Martin",
-    email: "m@example.com",
-    avatar: "/avatars/01.png",
-  },
-  {
-    name: "Isabella Nguyen",
-    email: "isabella.nguyen@email.com",
-    avatar: "/avatars/03.png",
-  },
-  {
-    name: "Emma Wilson",
-    email: "emma@example.com",
-    avatar: "/avatars/05.png",
-  },
-  {
-    name: "Jackson Lee",
-    email: "lee@example.com",
-    avatar: "/avatars/02.png",
-  },
-  {
-    name: "William Kim",
-    email: "will@email.com",
-    avatar: "/avatars/04.png",
-  },
-] as const;
-
-type User = (typeof users)[number];
+import { QUERY_KEYS } from "@/lib/queries";
+import { queryClient } from "@/lib/queries";
 
 interface ChatProps {
   chatHistory: ChatItem[];
@@ -111,6 +83,9 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
         ];
         updateChatHistory(newChat).then((res) => {
           console.log("updated chat history with agent", res);
+        });
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.meeting, meeting.id],
         });
         return newChat;
       });

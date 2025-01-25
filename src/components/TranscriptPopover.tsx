@@ -5,20 +5,26 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Download, Mic, Square } from "lucide-react";
 import { EDGE_FUNCTIONS, supabase } from "@/lib/supabase";
+import { SAMPLE_TRANSCRIPT } from "./sample-transcript";
+import { QUERY_KEYS } from "@/lib/queries";
+import { queryClient } from "@/lib/queries";
+// const messages = [
+//   "The funny thing is I didn't unfollow Elon at all. ",
+//   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
+//   "So if you, like, block them and unblock them, they'll stop seeing your stuff. Wait. So are art did he block you? So I was following you. He tweets a ton, and I I don't really have any, like, political follows. I follow people who I wanna their stuff, and I don't follow people who I don't wanna see their stuff. Elon is tweeting a lot. I don't know if you noticed. It's I did. It was getting closer. I was like, do I mute him? I still wanna see, like, the important stuff, but there's just too much stuff now. When I saw that, I was like, wait. Yeah. I just realized I haven't seen any El Ensemble. ",
+//   "Summer Time Line in, like, a couple of days. So I assume he, like, did something, either block and unblocked or, like, funny thing is I didn't unfollow Elon at all. One of the headlines It that Marques and Elon unfollowed each other on Twitter. I woke up to find that ",
+// ];
 
-const messages = [
-  "The funny thing is I didn't unfollow Elon at all. ",
-  "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
-  "So if you, like, block them and unblock them, they'll stop seeing your stuff. Wait. So are art did he block you? So I was following you. He tweets a ton, and I I don't really have any, like, political follows. I follow people who I wanna their stuff, and I don't follow people who I don't wanna see their stuff. Elon is tweeting a lot. I don't know if you noticed. It's I did. It was getting closer. I was like, do I mute him? I still wanna see, like, the important stuff, but there's just too much stuff now. When I saw that, I was like, wait. Yeah. I just realized I haven't seen any El Ensemble. ",
-  "Summer Time Line in, like, a couple of days. So I assume he, like, did something, either block and unblocked or, like, funny thing is I didn't unfollow Elon at all. One of the headlines It that Marques and Elon unfollowed each other on Twitter. I woke up to find that ",
-];
+const messages = SAMPLE_TRANSCRIPT;
 
 interface TranscriptPopoverProps {
-  meetingId: string;
+  meetingId: number;
+  onEnhance: () => void;
 }
 
 export default function TranscriptPopover({
   meetingId,
+  onEnhance,
 }: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
 
@@ -28,13 +34,16 @@ export default function TranscriptPopover({
   };
 
   const handleUpdate = async (transcript: string) => {
-    const { data, error } = await supabase.functions.invoke(
-      EDGE_FUNCTIONS.updateTranscript,
-      {
-        body: JSON.stringify({ meetingId: meetingId, transcript: transcript }),
-      },
-    );
-    console.log(data, error);
+    await supabase
+      .from("meeting")
+      .update({
+        transcript: transcript,
+      })
+      .eq("id", meetingId);
+
+    queryClient.invalidateQueries({
+      queryKey: [QUERY_KEYS.meeting, meetingId],
+    });
   };
 
   return (
@@ -57,6 +66,7 @@ export default function TranscriptPopover({
           <Button
             onClick={(e) => {
               e.stopPropagation();
+              onEnhance();
             }}
             // variant=""
           >
