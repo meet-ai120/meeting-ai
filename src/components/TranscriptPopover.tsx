@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queries";
 //   "Summer Time Line in, like, a couple of days. So I assume he, like, did something, either block and unblocked or, like, funny thing is I didn't unfollow Elon at all. One of the headlines It that Marques and Elon unfollowed each other on Twitter. I woke up to find that ",
 // ];
 
-const messages = SAMPLE_TRANSCRIPT;
+// const messages = SAMPLE_TRANSCRIPT;
 
 interface TranscriptPopoverProps {
   meetingId: number;
@@ -26,25 +26,108 @@ export default function TranscriptPopover({
   meetingId,
   onEnhance,
 }: TranscriptPopoverProps) {
+  const [messages, setMessages] = useState<string[]>([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    setIsRecording(!isRecording);
+    if (isRecording) {
+      stop();
+    } else {
+      record();
+    }
   };
 
-  const handleUpdate = async (transcript: string) => {
-    await supabase
-      .from("meeting")
-      .update({
-        transcript: transcript,
+  const record = () => {
+    setRecordedChunks([]);
+    setIsRecording(true);
+
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: true,
+        video: false,
       })
-      .eq("id", meetingId);
+      .then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: "audio/webm",
+        });
+        mediaRecorderRef.current = mediaRecorder;
 
-    queryClient.invalidateQueries({
-      queryKey: [QUERY_KEYS.meeting, meetingId],
-    });
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            console.log("EVENT DATA", event);
+            // sendToTranscribe(event.data);
+            setRecordedChunks((prev) => [...prev, event.data]);
+          }
+        };
+
+        mediaRecorder.start(1000);
+      })
+      .catch((error) => {
+        console.error("Error capturing audio:", error);
+        setIsRecording(false);
+      });
   };
+
+  const stop = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      setIsRecording(false);
+      mediaRecorderRef.current.requestData();
+
+      mediaRecorderRef.current.onstop = () => {
+        sendToTranscribe();
+        // blob.arrayBuffer().then((buffer) => {
+        //   // window.electron.ipcRenderer.send('save-recording', buffer)
+        //   console.log(buffer);
+        // });
+        setRecordedChunks([]);
+      };
+
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+  };
+
+  const sendToTranscribe = async () => {
+    const blob = new Blob(recordedChunks, {
+      type: "audio/webm; codecs=opus",
+    });
+    const audioFile = new File([blob], `audio-${new Date().getTime()}.webm`, {
+      type: "audio/webm",
+    });
+
+    console.log(audioFile);
+
+    const formData = new FormData();
+    formData.append("audio", audioFile);
+
+    const response = await fetch("http://localhost:8080/audio", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    setMessages(data.text.split("\n"));
+  };
+
+  // const handleUpdate = async (transcript: string) => {
+  //   await supabase
+  //     .from("meeting")
+  //     .update({
+  //       transcript: transcript,
+  //     })
+  //     .eq("id", meetingId);
+
+  //   queryClient.invalidateQueries({
+  //     queryKey: [QUERY_KEYS.meeting, meetingId],
+  //   });
+  // };
 
   return (
     <Popover>
@@ -79,7 +162,7 @@ export default function TranscriptPopover({
           <span className="text-lg font-bold">Transcript</span>
           <Button
             variant="outline"
-            onClick={() => handleUpdate(messages.join(" "))}
+            // onClick={() => handleUpdate(messages.join(" "))}
           >
             <Download />
           </Button>

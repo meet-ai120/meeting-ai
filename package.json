@@ -65,6 +65,7 @@
     "vite": "^6.0.7"
   },
   "dependencies": {
+    "@electron-toolkit/utils": "^3.0.0",
     "@nanostores/react": "github:ai/react",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.4",
