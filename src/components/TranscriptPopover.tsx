@@ -1,13 +1,9 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 import { Download, Mic, Square } from "lucide-react";
-import { EDGE_FUNCTIONS, supabase } from "@/lib/supabase";
-import { SAMPLE_TRANSCRIPT } from "./sample-transcript";
-import { QUERY_KEYS } from "@/lib/queries";
-import { queryClient } from "@/lib/queries";
+import { sendAudio } from "@/lib/server";
+import { supabase } from "@/lib/supabase";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
 //   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
@@ -20,16 +16,31 @@ import { queryClient } from "@/lib/queries";
 interface TranscriptPopoverProps {
   meetingId: number;
   onEnhance: () => void;
+  transcript: string;
+  // Use state update function
+  setTranscript: (transcript: string | ((prev: string) => string)) => void;
 }
 
 export default function TranscriptPopover({
   meetingId,
   onEnhance,
+  transcript,
+  setTranscript,
 }: TranscriptPopoverProps) {
-  const [messages, setMessages] = useState<string>("");
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      if (transcript) {
+        await supabase
+          .from("meeting")
+          .update({ transcript: transcript })
+          .eq("id", meetingId);
+      }
+    })();
+  }, [transcript, meetingId]);
 
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -109,12 +120,9 @@ export default function TranscriptPopover({
     const formData = new FormData();
     formData.append("audio", audioFile);
 
-    const response = await fetch("http://localhost:8080/audio", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    setMessages((prev) => prev + data.text);
+    const response = await sendAudio(formData);
+    const data = await response.data;
+    setTranscript((prev) => prev + data.text);
   };
 
   return (
@@ -159,7 +167,7 @@ export default function TranscriptPopover({
           <div className="grid gap-4 p-2 px-4 pt-1">
             <div className="flex flex-col gap-2">
               <div className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black">
-                {messages}
+                {transcript}
               </div>
             </div>
           </div>

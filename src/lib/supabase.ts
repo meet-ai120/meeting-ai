@@ -20,19 +20,9 @@ export interface ChatItem {
   content: string;
 }
 
-export const EDGE_FUNCTIONS = {
-  updateTranscript: "update-transcript",
-  textPrompt: "text-prompt",
-};
-
 export interface TextPromptBody {
   meeting: Meeting;
   type: "summary" | "chat";
   note: string;
   chatQuestion: string;
 }
-
-export const sendTextPrompt = async (body: TextPromptBody) =>
-  await supabase.functions.invoke(EDGE_FUNCTIONS.textPrompt, {
-    body,
-  });

@@ -1,4 +1,4 @@
-import { ChatItem, Meeting, sendTextPrompt } from "@/lib/supabase";
+import { ChatItem } from "@/lib/supabase";
 import { Link, useParams } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
@@ -10,15 +10,23 @@ import { Content, Editor } from "@tiptap/react";
 import TranscriptPopover from "@/components/TranscriptPopover";
 import debounce from "lodash.debounce";
 import { QUERY_KEYS, queryClient, useMeeting } from "@/lib/queries";
+import { sendTextPrompt } from "@/lib/server";
 
 export default function MeetingPage() {
   const params = MeetingRoute.useParams();
   const meetingId = Number(params.meetingId);
   const [note, setNote] = useState<Content>("");
   const meeting = useMeeting(meetingId);
+  const [transcript, setTranscript] = useState<string>("");
   const editorRef = useRef<Editor | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
   console.log("meeting", meeting.data?.data);
+
+  useEffect(() => {
+    if (meeting.data?.data && transcript === "") {
+      setTranscript(meeting.data.data.transcript || "");
+    }
+  }, [meeting.data?.data]);
 
   useEffect(() => {
     if (meeting.data?.data && editorRef.current && note === "") {
@@ -83,7 +91,12 @@ export default function MeetingPage() {
           disabled={isEnhancing}
         />
         <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
-          <TranscriptPopover onEnhance={handleEnhance} meetingId={meetingId} />
+          <TranscriptPopover
+            transcript={transcript}
+            setTranscript={setTranscript}
+            onEnhance={handleEnhance}
+            meetingId={meetingId}
+          />
         </div>
       </div>
       <div className="w-1/3 border-l">

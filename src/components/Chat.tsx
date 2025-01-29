@@ -7,16 +7,11 @@ import { Check, Loader2, Plus, Send } from "lucide-react";
 import { Input } from "./ui/input";
 
 import { cn } from "@/lib/utils";
-import {
-  ChatItem,
-  EDGE_FUNCTIONS,
-  Meeting,
-  sendTextPrompt,
-  supabase,
-} from "@/lib/supabase";
+import { ChatItem, Meeting, supabase } from "@/lib/supabase";
 import { useCallback, useEffect, useState } from "react";
 import { QUERY_KEYS } from "@/lib/queries";
 import { queryClient } from "@/lib/queries";
+import { sendTextPrompt } from "@/lib/server";
 
 interface ChatProps {
   chatHistory: ChatItem[];
