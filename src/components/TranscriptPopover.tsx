@@ -26,10 +26,10 @@ export default function TranscriptPopover({
   meetingId,
   onEnhance,
 }: TranscriptPopoverProps) {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<string>("");
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -41,7 +41,6 @@ export default function TranscriptPopover({
   };
 
   const record = () => {
-    setRecordedChunks([]);
     setIsRecording(true);
 
     navigator.mediaDevices
@@ -57,13 +56,18 @@ export default function TranscriptPopover({
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            console.log("EVENT DATA", event);
             // sendToTranscribe(event.data);
-            setRecordedChunks((prev) => [...prev, event.data]);
+            sendToTranscribe(event.data);
           }
         };
 
-        mediaRecorder.start(1000);
+        mediaRecorder.start();
+        intervalRef.current = setInterval(() => {
+          mediaRecorder.requestData();
+          mediaRecorder.stop();
+
+          mediaRecorder.start();
+        }, 5000);
       })
       .catch((error) => {
         console.error("Error capturing audio:", error);
@@ -79,15 +83,9 @@ export default function TranscriptPopover({
       setIsRecording(false);
       mediaRecorderRef.current.requestData();
 
-      mediaRecorderRef.current.onstop = () => {
-        sendToTranscribe();
-        // blob.arrayBuffer().then((buffer) => {
-        //   // window.electron.ipcRenderer.send('save-recording', buffer)
-        //   console.log(buffer);
-        // });
-        setRecordedChunks([]);
-      };
-
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream
         .getTracks()
@@ -95,15 +93,18 @@ export default function TranscriptPopover({
     }
   };
 
-  const sendToTranscribe = async () => {
-    const blob = new Blob(recordedChunks, {
+  const sendToTranscribe = async (blob: Blob) => {
+    console.log("SENDING TO TRANSCRIBE");
+    const newBlob = new Blob([blob], {
       type: "audio/webm; codecs=opus",
     });
-    const audioFile = new File([blob], `audio-${new Date().getTime()}.webm`, {
-      type: "audio/webm",
-    });
-
-    console.log(audioFile);
+    const audioFile = new File(
+      [newBlob],
+      `audio-${new Date().getTime()}.webm`,
+      {
+        type: "audio/webm",
+      },
+    );
 
     const formData = new FormData();
     formData.append("audio", audioFile);
@@ -113,21 +114,8 @@ export default function TranscriptPopover({
       body: formData,
     });
     const data = await response.json();
-    setMessages(data.text.split("\n"));
+    setMessages((prev) => prev + data.text);
   };
-
-  // const handleUpdate = async (transcript: string) => {
-  //   await supabase
-  //     .from("meeting")
-  //     .update({
-  //       transcript: transcript,
-  //     })
-  //     .eq("id", meetingId);
-
-  //   queryClient.invalidateQueries({
-  //     queryKey: [QUERY_KEYS.meeting, meetingId],
-  //   });
-  // };
 
   return (
     <Popover>
@@ -170,14 +158,9 @@ export default function TranscriptPopover({
         <div className="flex-1 overflow-y-auto">
           <div className="grid gap-4 p-2 px-4 pt-1">
             <div className="flex flex-col gap-2">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black"
-                >
-                  {message}
-                </div>
-              ))}
+              <div className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black">
+                {messages}
+              </div>
             </div>
           </div>
         </div>
