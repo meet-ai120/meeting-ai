@@ -12,6 +12,7 @@
 - Fix data storing, right now regularly invalidating queries. Make it so that meeting data is stored locally and only updates should be sent to DB. When error we can can refetch
 - Apply streaming text
 - Handle errors, especially audio transcription errors show neatly in UI
+- Combine sign in and sign up
 
 
 ## Day 1
