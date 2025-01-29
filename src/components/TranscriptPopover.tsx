@@ -18,7 +18,7 @@ interface TranscriptPopoverProps {
   onEnhance: () => void;
   transcript: string;
   // Use state update function
-  setTranscript: (transcript: string | ((prev: string) => string)) => void;
+  setTranscript: (callback: (prev: string) => string) => void;
 }
 
 export default function TranscriptPopover({

@@ -1,4 +1,4 @@
-import { ChatItem } from "@/lib/supabase";
+import { ChatItem, Meeting } from "@/lib/supabase";
 import { Link, useParams } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
@@ -11,29 +11,38 @@ import TranscriptPopover from "@/components/TranscriptPopover";
 import debounce from "lodash.debounce";
 import { QUERY_KEYS, queryClient, useMeeting } from "@/lib/queries";
 import { sendTextPrompt } from "@/lib/server";
+import { useAppContext } from "@/store/AppContext";
 
 export default function MeetingPage() {
   const params = MeetingRoute.useParams();
   const meetingId = Number(params.meetingId);
-  const [note, setNote] = useState<Content>("");
-  const meeting = useMeeting(meetingId);
-  const [transcript, setTranscript] = useState<string>("");
   const editorRef = useRef<Editor | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
-  console.log("meeting", meeting.data?.data);
+  const { updateState } = useAppContext();
+
+  const [currentMeeting, setCurrentMeeting] = useState<Meeting | null>(null);
 
   useEffect(() => {
-    if (meeting.data?.data && transcript === "") {
-      setTranscript(meeting.data.data.transcript || "");
-    }
-  }, [meeting.data?.data]);
+    const fetchMeeting = async () => {
+      updateState({ isLoading: true });
 
-  useEffect(() => {
-    if (meeting.data?.data && editorRef.current && note === "") {
-      editorRef.current.commands.setContent(meeting.data.data.notes);
-      setNote(meeting.data.data.notes);
-    }
-  }, [meeting.data?.data]);
+      const { data, error } = await supabase
+        .from("meeting")
+        .select("*")
+        .eq("id", meetingId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching meeting", error);
+      } else {
+        setCurrentMeeting(data);
+      }
+      editorRef.current?.commands.setContent(data?.notes || "");
+      updateState({ isLoading: false });
+    };
+
+    fetchMeeting();
+  }, [meetingId]);
 
   const debouncedUpdateNote = useRef(
     debounce(async (note: Content) => {
@@ -48,29 +57,27 @@ export default function MeetingPage() {
   ).current;
 
   const handleUpdateNote = async (note: Content) => {
-    setNote(note);
+    // @ts-ignore
+    setCurrentMeeting((prev) => ({ ...prev, notes: note }));
     debouncedUpdateNote(note);
   };
-  console.log("note", note);
 
   const handleEnhance = async () => {
-    if (!meeting.data?.data) return;
+    if (!currentMeeting) return;
     setIsEnhancing(true);
-    console.log("NOTE FOR ENHANCE", note);
+    console.log("NOTE FOR ENHANCE", currentMeeting.notes);
     const res = await sendTextPrompt({
-      meeting: meeting.data?.data,
+      meeting: currentMeeting,
       type: "summary",
-      note: note?.toString() || "",
+      note: currentMeeting.notes?.toString() || "",
       chatQuestion: "",
     });
     const response = res.data.response;
     if (response) {
       editorRef.current?.commands.setContent(response);
-      setNote(meeting.data.data.notes);
+
+      setCurrentMeeting((prev) => (prev ? { ...prev, notes: response } : null));
       debouncedUpdateNote(response);
-      queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.meeting, meetingId],
-      });
     }
     setIsEnhancing(false);
   };
@@ -80,7 +87,7 @@ export default function MeetingPage() {
       <div className="relative flex w-2/3 flex-col overflow-hidden bg-gray-100">
         <MinimalTiptapEditor
           editorRef={editorRef}
-          value={note}
+          value={currentMeeting?.notes}
           onChange={handleUpdateNote}
           className="flex h-full w-full flex-col overflow-hidden"
           editorContentClassName="p-5 overflow-y-auto"
@@ -92,8 +99,14 @@ export default function MeetingPage() {
         />
         <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
           <TranscriptPopover
-            transcript={transcript}
-            setTranscript={setTranscript}
+            transcript={currentMeeting?.transcript || ""}
+            setTranscript={(callback) => {
+              setCurrentMeeting((prev) =>
+                prev
+                  ? { ...prev, transcript: callback(prev.transcript || "") }
+                  : null,
+              );
+            }}
             onEnhance={handleEnhance}
             meetingId={meetingId}
           />
@@ -101,10 +114,10 @@ export default function MeetingPage() {
       </div>
       <div className="w-1/3 border-l">
         <Chat
-          meeting={meeting.data?.data}
+          meeting={currentMeeting}
           chatHistory={
-            (meeting.data?.data?.chat_history
-              ? JSON.parse(meeting.data?.data?.chat_history as string)
+            (currentMeeting?.chat_history
+              ? JSON.parse(currentMeeting.chat_history as string)
               : []) as ChatItem[]
           }
         />

@@ -92,7 +92,7 @@ export default function HomePage() {
   const { data: meetings, isLoading: meetingsLoading } = useMeetings();
 
   const handleCreateMeeting = async () => {
-    const nextNumber = meetings?.data?.length || 0 + 1;
+    const nextNumber = (meetings?.data?.length || 0) + 1;
     const { data, error } = await supabase
       .from("meeting")
       .insert([{ title: `Meeting #${nextNumber}` }])

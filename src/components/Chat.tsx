@@ -63,12 +63,14 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
       console.log("updated chat history with user", res);
     });
 
-    sendTextPrompt({
-      meeting: meeting,
-      type: "chat",
-      note: "",
-      chatQuestion: input,
-    }).then((res) => {
+    try {
+      const res = await sendTextPrompt({
+        meeting: meeting,
+        type: "chat",
+        note: "",
+        chatQuestion: input,
+      });
+
       console.log("AI response", res);
 
       setChat((chat) => {
@@ -79,13 +81,24 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
         updateChatHistory(newChat).then((res) => {
           console.log("updated chat history with agent", res);
         });
-        queryClient.invalidateQueries({
-          queryKey: [QUERY_KEYS.meeting, meeting.id],
-        });
         return newChat;
       });
+    } catch (error) {
+      setChat((chat) => {
+        const newChat: ChatItem[] = [
+          ...chat,
+          {
+            actor: "agent",
+            content:
+              "Error: " +
+              (error instanceof Error ? error.message : String(error)),
+          },
+        ];
+        return newChat;
+      });
+    } finally {
       setIsLoading(false);
-    });
+    }
   };
 
   return (

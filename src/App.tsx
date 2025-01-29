@@ -13,36 +13,10 @@ import { supabase } from "./lib/supabase";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queries";
 import { useChat } from "ai/react";
+import { AppProvider } from "./store/AppContext";
 
 export default function App() {
   const { i18n } = useTranslation();
-  // const { messages, input, handleInputChange, handleSubmit } = useChat({
-  //   api: "http://localhost:54321/functions/v1/vercel-ai",
-  // });
-
-  // No need for real time changes now
-
-  // useEffect(() => {
-  //   const changesChannel = supabase
-  //     .channel("table_db_changes")
-  //     .on(
-  //       "postgres_changes",
-  //       {
-  //         event: "*",
-  //         schema: "public",
-  //         table: "meeting",
-  //       },
-  //       (payload) => {
-  //         console.log("Changes received", payload);
-  //       },
-  //     )
-  //     .subscribe();
-
-  //   return () => {
-  //     supabase.removeChannel(changesChannel);
-  //   };
-  // }, []);
-
   useEffect(() => {
     syncThemeWithLocal();
     updateAppLanguage(i18n);
@@ -56,7 +30,9 @@ root.render(
   <React.StrictMode>
     <TooltipProvider>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <AppProvider>
+          <App />
+        </AppProvider>
       </QueryClientProvider>
     </TooltipProvider>
   </React.StrictMode>,
