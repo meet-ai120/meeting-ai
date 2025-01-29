@@ -13,6 +13,9 @@
 - Apply streaming text
 - Handle errors, especially audio transcription errors show neatly in UI
 - Combine sign in and sign up
+- Language dropdown
+- Meeting title
+- 
 
 
 ## Day 1

@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 
+declare global {
+  interface Window {
+    electronAPI: {
+      openExternal: (url: string) => Promise<void>;
+    };
+  }
+}
+
 export function LoginForm({
   className,
   ...props
@@ -21,7 +29,6 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOTP] = useState("");
   const navigate = useNavigate();
@@ -32,33 +39,37 @@ export function LoginForm({
     setError(null);
 
     try {
-      if (isSignUp) {
-        if (!showOTP) {
-          const { error, data } = await supabase.auth.signUp({
+      if (showOTP) {
+        const { error } = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: "signup",
+        });
+        if (error) throw error;
+        navigate({ to: "/" });
+      } else {
+        // Try to sign in first
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        // If user doesn't exist, try to sign up
+        if (signInError?.message?.includes("Invalid login credentials")) {
+          const { error: signUpError, data } = await supabase.auth.signUp({
             email,
             password,
             options: {
               emailRedirectTo: window.location.origin,
             },
           });
-          if (error) throw error;
+          if (signUpError) throw signUpError;
           setShowOTP(true);
+        } else if (signInError) {
+          throw signInError;
         } else {
-          const { error } = await supabase.auth.verifyOtp({
-            email,
-            token: otp,
-            type: "signup",
-          });
-          if (error) throw error;
           navigate({ to: "/" });
         }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        navigate({ to: "/" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -69,14 +80,19 @@ export function LoginForm({
 
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          skipBrowserRedirect: false,
+          skipBrowserRedirect: true,
           redirectTo: window.location.origin,
         },
       });
+
       if (error) throw error;
+
+      if (data?.url) {
+        await window.electronAPI.openExternal(data.url);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
@@ -87,18 +103,12 @@ export function LoginForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            {showOTP
-              ? "Enter Verification Code"
-              : isSignUp
-                ? "Sign Up"
-                : "Login"}
+            {showOTP ? "Enter Verification Code" : "Sign In"}
           </CardTitle>
           <CardDescription>
             {showOTP
               ? "Enter the verification code sent to your email"
-              : isSignUp
-                ? "Enter your email below to create your account"
-                : "Enter your email below to login to your account"}
+              : "Enter your email to sign in or create an account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -131,18 +141,10 @@ export function LoginForm({
                     />
                   </div>
                   <div className="grid gap-2">
-                    {/* <div className="flex items-center">
-                      <Label htmlFor="password">Password</Label>
-                      <a
-                        href="#"
-                        className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                      >
-                        Forgot your password?
-                      </a>
-                    </div> */}
                     <Input
                       id="password"
                       type="password"
+                      placeholder="Enter password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -151,13 +153,7 @@ export function LoginForm({
                 </>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading
-                  ? "Loading..."
-                  : showOTP
-                    ? "Verify"
-                    : isSignUp
-                      ? "Sign Up"
-                      : "Login"}
+                {loading ? "Loading..." : showOTP ? "Verify" : "Continue"}
               </Button>
               {!showOTP && (
                 <Button
@@ -166,27 +162,10 @@ export function LoginForm({
                   className="w-full"
                   onClick={handleGoogleLogin}
                 >
-                  {isSignUp ? "Sign Up" : "Login"} with Google
+                  Continue with Google
                 </Button>
               )}
             </div>
-            {!showOTP && (
-              <div className="mt-4 text-center text-sm">
-                {isSignUp
-                  ? "Already have an account? "
-                  : "Don't have an account? "}
-                <button
-                  type="button"
-                  className="underline underline-offset-4"
-                  onClick={() => {
-                    setError(null);
-                    setIsSignUp(!isSignUp);
-                  }}
-                >
-                  {isSignUp ? "Login" : "Sign up"}
-                </button>
-              </div>
-            )}
           </form>
         </CardContent>
       </Card>
