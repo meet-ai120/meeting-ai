@@ -80,19 +80,15 @@ export function LoginForm({
 
   const handleGoogleLogin = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          skipBrowserRedirect: true,
+          skipBrowserRedirect: false,
           redirectTo: window.location.origin,
         },
       });
 
       if (error) throw error;
-
-      if (data?.url) {
-        await window.electronAPI.openExternal(data.url);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     }
