@@ -1,4 +1,4 @@
-import { QueryClient, useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { Meeting, supabase } from "./supabase";
 
 export const queryClient = new QueryClient();
@@ -22,4 +22,14 @@ export const useMeeting = (meetingId: number) =>
     queryKey: [QUERY_KEYS.meeting, meetingId],
     queryFn: async () =>
       supabase.from("meeting").select("*").eq("id", meetingId).single(),
+  });
+
+export const useDeleteMeeting = () =>
+  useMutation({
+    mutationFn: async (meetingId: number) => {
+      await supabase.from("meeting").delete().eq("id", meetingId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.meetings] });
+    },
   });

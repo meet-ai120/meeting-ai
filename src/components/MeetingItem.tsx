@@ -1,13 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { formatDate } from "@/lib/format";
-import { Meeting } from "@/lib/supabase";
+import { Meeting, supabase } from "@/lib/supabase";
 import { MeetingRoute } from "@/routes/routes";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Loader2, MoreHorizontal, MoreVertical, Trash } from "lucide-react";
+import { useDeleteMeeting } from "@/lib/queries";
 
 export function MeetingItem({ meeting }: { meeting: Meeting }) {
   const navigate = useNavigate();
+  const deleteMutation = useDeleteMeeting();
+
   return (
     <button
       onClick={() => {
@@ -23,10 +33,37 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
       <div className="flex w-full flex-col gap-1">
         <div className="flex items-center">
           <div className="flex items-center gap-2">
-            <div className="font-semibold">{meeting.title}</div>
+            <div className="line-clamp-1 font-semibold">{meeting.title}</div>
           </div>
-          <div className={"ml-auto text-xs"}>
-            {formatDate(meeting.created_at)}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs">{formatDate(meeting.created_at)}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="flex h-6 w-6 items-center justify-center rounded-md border border-input bg-transparent p-0 hover:bg-accent disabled:opacity-50"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreHorizontal className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">Open menu</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive hover:text-destructive focus:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteMutation.mutate(meeting.id);
+                  }}
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {/* <div className="text-xs font-medium">{meeting.description}</div> */}
@@ -35,7 +72,7 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
         {meeting.description.substring(0, 300)}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         {["meeting", "important", "personal"].map((label, index) => (
           <Badge
             key={label}
@@ -45,7 +82,7 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
             {label}
           </Badge>
         ))}
-      </div>
+      </div> */}
     </button>
   );
 }

@@ -91,6 +91,13 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { data: meetings, isLoading: meetingsLoading } = useMeetings();
 
+  useEffect(() => {
+    console.log("HomePage MOUNTING");
+    return () => {
+      console.log("HomePage UNMOUNTING");
+    };
+  }, []);
+
   const handleCreateMeeting = async () => {
     const nextNumber = (meetings?.data?.length || 0) + 1;
     const { data, error } = await supabase
@@ -115,6 +122,9 @@ export default function HomePage() {
       <hr className="w-full" />
       <div className="flex flex-1 flex-col items-center overflow-auto p-4">
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2">
+          <Button className="mb-2 h-12" onClick={handleCreateMeeting}>
+            Create New Meeting
+          </Button>
           {meetingsLoading ? (
             <>
               <MeetingItemsSkeleton />
@@ -127,9 +137,6 @@ export default function HomePage() {
             ))
           )}
         </div>
-        <Button className="mt-4" onClick={handleCreateMeeting}>
-          Create New Meeting
-        </Button>
       </div>
     </div>
   );

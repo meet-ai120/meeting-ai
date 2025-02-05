@@ -10,7 +10,7 @@ import { Content, Editor } from "@tiptap/react";
 import TranscriptPopover from "@/components/TranscriptPopover";
 import debounce from "lodash.debounce";
 import { QUERY_KEYS, queryClient, useMeeting } from "@/lib/queries";
-import { sendTextPrompt } from "@/lib/server";
+import { getTitle, sendTextPrompt } from "@/lib/server";
 import { useAppContext } from "@/store/AppContext";
 
 export default function MeetingPage() {
@@ -78,9 +78,36 @@ export default function MeetingPage() {
 
       setCurrentMeeting((prev) => (prev ? { ...prev, notes: response } : null));
       debouncedUpdateNote(response);
+      handleGetMeetingInfo(response).then(() => {});
     }
     setIsEnhancing(false);
   };
+
+  const handleGetMeetingInfo = async (notes?: string) => {
+    console.log("GETTING MEETING INFO", currentMeeting);
+    if (!currentMeeting) return;
+    const res = await getTitle(
+      currentMeeting.transcript || "",
+      notes || currentMeeting?.notes || "",
+      currentMeeting.title || "",
+      currentMeeting.description || "",
+    );
+    const data = res.data;
+    await supabase
+      .from("meeting")
+      .update({ title: res.data.title, description: res.data.description })
+      .eq("id", meetingId);
+  };
+
+  useEffect(() => {
+    console.log("MeetingPage MOUNTING");
+    return () => {
+      console.log("UNMOUNTING", currentMeeting);
+      if (currentMeeting) {
+        handleGetMeetingInfo().then(() => {});
+      }
+    };
+  }, [currentMeeting]);
 
   return (
     <div className="flex h-full w-full">

@@ -138,7 +138,7 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto border-t pt-3"
         >
-          <div className="space-y-4">
+          <div className="space-y-2">
             {chat.map((message, index) => (
               <div
                 key={index}

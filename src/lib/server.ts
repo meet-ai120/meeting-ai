@@ -13,4 +13,11 @@ export const sendAudio = (body: FormData) => server.post("/audio", body);
 export const sendToCorrection = (transcript: string) =>
   server.post("/correction", { transcript });
 
+export const getTitle = (
+  transcript: string,
+  notes: string,
+  title: string,
+  description: string,
+) => server.post("/title", { transcript, notes, title, description });
+
 export default server;
