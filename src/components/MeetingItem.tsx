@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatFullDateTime } from "@/lib/format";
 import { Meeting, supabase } from "@/lib/supabase";
 import { MeetingRoute } from "@/routes/routes";
 import { useNavigate } from "@tanstack/react-router";
@@ -13,6 +13,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Loader2, MoreHorizontal, MoreVertical, Trash } from "lucide-react";
 import { useDeleteMeeting } from "@/lib/queries";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function MeetingItem({ meeting }: { meeting: Meeting }) {
   const navigate = useNavigate();
@@ -36,7 +37,16 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
             <div className="line-clamp-1 font-semibold">{meeting.title}</div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs">{formatDate(meeting.created_at)}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-xs">
+                  {formatDate(meeting.created_at)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{formatFullDateTime(meeting.created_at)}</p>
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <button

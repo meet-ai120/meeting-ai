@@ -22,8 +22,8 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   const router = useRouter();
 
   return (
-    <div className="draglayer flex w-screen items-center items-stretch justify-between p-2 pr-4">
-      <div className="ml-20 flex-1">
+    <div className="draglayer container flex w-screen items-center items-stretch justify-between p-2 pr-4">
+      <div className="flex-1">
         <Button
           variant="outline"
           className="no-drag"
