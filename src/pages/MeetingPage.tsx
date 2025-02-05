@@ -19,6 +19,7 @@ export default function MeetingPage() {
   const editorRef = useRef<Editor | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const { updateState } = useAppContext();
+  const [streamingContent, setStreamingContent] = useState("");
 
   const [currentMeeting, setCurrentMeeting] = useState<Meeting | null>(null);
 
@@ -65,22 +66,41 @@ export default function MeetingPage() {
   const handleEnhance = async () => {
     if (!currentMeeting) return;
     setIsEnhancing(true);
+    setStreamingContent("");
     console.log("NOTE FOR ENHANCE", currentMeeting.notes);
-    const res = await sendTextPrompt({
-      meeting: currentMeeting,
-      type: "summary",
-      note: currentMeeting.notes?.toString() || "",
-      chatQuestion: "",
-    });
-    const response = res.data.response;
-    if (response) {
-      editorRef.current?.commands.setContent(response);
 
-      setCurrentMeeting((prev) => (prev ? { ...prev, notes: response } : null));
-      debouncedUpdateNote(response);
-      handleGetMeetingInfo(response).then(() => {});
+    try {
+      const res = await sendTextPrompt(
+        {
+          meeting: currentMeeting,
+          type: "summary",
+          note: currentMeeting.notes?.toString() || "",
+          chatQuestion: "",
+        },
+        (chunk) => {
+          setStreamingContent((prev) => {
+            const newContent = prev + chunk;
+            editorRef.current?.commands.setContent(newContent);
+            return newContent;
+          });
+        },
+      );
+
+      // After streaming is complete, update the meeting with the final content
+      if (res.data.response) {
+        setCurrentMeeting((prev) =>
+          prev ? { ...prev, notes: res.data.response } : null,
+        );
+        debouncedUpdateNote(res.data.response);
+        handleGetMeetingInfo(res.data.response).then(() => {});
+      }
+    } catch (error) {
+      console.error("Error during enhancement:", error);
+      // Optionally handle error UI feedback here
+    } finally {
+      setIsEnhancing(false);
+      setStreamingContent("");
     }
-    setIsEnhancing(false);
   };
 
   const handleGetMeetingInfo = async (notes?: string) => {
@@ -99,15 +119,15 @@ export default function MeetingPage() {
       .eq("id", meetingId);
   };
 
-  useEffect(() => {
-    console.log("MeetingPage MOUNTING");
-    return () => {
-      console.log("UNMOUNTING", currentMeeting);
-      if (currentMeeting) {
-        handleGetMeetingInfo().then(() => {});
-      }
-    };
-  }, [currentMeeting]);
+  // useEffect(() => {
+  //   console.log("MeetingPage MOUNTING");
+  //   return () => {
+  //     console.log("UNMOUNTING", currentMeeting);
+  //     if (currentMeeting) {
+  //       handleGetMeetingInfo().then(() => {});
+  //     }
+  //   };
+  // }, [currentMeeting]);
 
   return (
     <div className="flex h-full w-full">

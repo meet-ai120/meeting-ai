@@ -23,6 +23,7 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
   const inputLength = input.trim().length;
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const chatContainerRef = React.useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -58,24 +59,33 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
     const newChat: ChatItem[] = [...chat, { actor: "user", content: input }];
     setChat(newChat);
     setIsLoading(true);
+    setStreamingContent("");
 
     updateChatHistory(newChat).then((res) => {
       console.log("updated chat history with user", res);
     });
 
     try {
-      const res = await sendTextPrompt({
-        meeting: meeting,
-        type: "chat",
-        note: "",
-        chatQuestion: input,
-      });
+      const res = await sendTextPrompt(
+        {
+          meeting: meeting,
+          type: "chat",
+          note: "",
+          chatQuestion: input,
+        },
+        (chunk) => {
+          setStreamingContent((prev) => {
+            const newContent = prev + chunk;
+            scrollToBottom();
+            return newContent;
+          });
+        },
+      );
 
-      console.log("AI response", res);
-
-      setChat((chat) => {
+      // After streaming is complete, update the chat with the full response
+      setChat((prevChat) => {
         const newChat: ChatItem[] = [
-          ...chat,
+          ...prevChat,
           { actor: "agent", content: res.data.response },
         ];
         updateChatHistory(newChat).then((res) => {
@@ -98,6 +108,7 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
       });
     } finally {
       setIsLoading(false);
+      setStreamingContent("");
     }
   };
 
@@ -152,17 +163,26 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
                 {message.content}
               </div>
             ))}
-            {isLoading ? (
+            {isLoading && streamingContent && (
               <div
                 className={cn(
                   "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
-
+                  "bg-muted",
+                )}
+              >
+                {streamingContent}
+              </div>
+            )}
+            {isLoading && !streamingContent && (
+              <div
+                className={cn(
+                  "flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm",
                   "bg-muted",
                 )}
               >
                 Typing...
               </div>
-            ) : null}
+            )}
           </div>
         </CardContent>
         <CardFooter>
@@ -183,7 +203,11 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
               value={input}
               onChange={(event) => setInput(event.target.value)}
             />
-            <Button type="submit" size="icon" disabled={inputLength === 0}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={inputLength === 0 || isLoading}
+            >
               <Send />
               <span className="sr-only">Send</span>
             </Button>

@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 
 interface AppState {
   isLoading: boolean;
+  title?: string;
 }
 
 interface AppContextType extends AppState {
@@ -14,6 +15,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState({
     isLoading: false,
+    title: "",
   });
 
   // Create methods to update the state
