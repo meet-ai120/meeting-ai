@@ -11,7 +11,10 @@ export const QUERY_KEYS = {
 export const useMeetings = () =>
   useQuery({
     queryKey: [QUERY_KEYS.meetings],
-    queryFn: async () => supabase.from("meeting").select("*"),
+    queryFn: async () =>
+      supabase.from("meeting").select("*").order("created_at", {
+        ascending: false,
+      }),
   });
 
 export const useMeeting = (meetingId: number) =>

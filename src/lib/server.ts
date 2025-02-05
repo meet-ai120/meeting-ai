@@ -10,4 +10,7 @@ export const sendTextPrompt = (body: TextPromptBody) =>
 
 export const sendAudio = (body: FormData) => server.post("/audio", body);
 
+export const sendToCorrection = (transcript: string) =>
+  server.post("/correction", { transcript });
+
 export default server;

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Download, Mic, Square } from "lucide-react";
-import { sendAudio } from "@/lib/server";
+import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
@@ -30,6 +30,7 @@ export default function TranscriptPopover({
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isRecordingRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -53,10 +54,15 @@ export default function TranscriptPopover({
 
   const record = () => {
     setIsRecording(true);
+    isRecordingRef.current = true;
 
     navigator.mediaDevices
       .getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: false, // Ensure raw audio
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
         video: false,
       })
       .then((stream) => {
@@ -67,7 +73,6 @@ export default function TranscriptPopover({
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            // sendToTranscribe(event.data);
             sendToTranscribe(event.data);
           }
         };
@@ -87,6 +92,7 @@ export default function TranscriptPopover({
   };
 
   const stop = () => {
+    isRecordingRef.current = false;
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
@@ -122,7 +128,20 @@ export default function TranscriptPopover({
 
     const response = await sendAudio(formData);
     const data = await response.data;
-    setTranscript((prev) => prev + data.text);
+    console.log("Is recording", isRecordingRef.current);
+    setTranscript((prev) => {
+      if (!isRecordingRef.current) {
+        handleCorrection(prev + data.text);
+      }
+      return prev + data.text;
+    });
+  };
+
+  const handleCorrection = async (transcript: string) => {
+    console.log("Sending to correction");
+    const response = await sendToCorrection(transcript);
+    const text = await response.data.response;
+    setTranscript((prev) => text);
   };
 
   return (

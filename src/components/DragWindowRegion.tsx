@@ -12,6 +12,7 @@ import { ChevronLeft, Moon, Search, Sun } from "lucide-react";
 import { UserNav } from "./UserNav";
 import { Label } from "./ui/label";
 import { useRouter } from "@tanstack/react-router";
+import ToggleTheme from "./ToggleTheme";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -32,8 +33,8 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
           <ChevronLeft size="sm" />
         </Button>
       </div>
-      <div className="no-drag flex items-center space-x-4">
-        <div className="relative">
+      <div className="flex items-center space-x-4">
+        <div className="no-drag relative">
           <Label htmlFor="search" className="sr-only">
             Search
           </Label>
@@ -44,7 +45,9 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
           />
           <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
         </div>
-        <UserNav />
+        {/* <ToggleTheme className="no-drag" /> */}
+
+        <UserNav className="no-drag" />
       </div>
     </div>
   );

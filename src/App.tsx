@@ -18,7 +18,7 @@ import { AppProvider } from "./store/AppContext";
 export default function App() {
   const { i18n } = useTranslation();
   useEffect(() => {
-    syncThemeWithLocal();
+    // syncThemeWithLocal();
     updateAppLanguage(i18n);
   }, [i18n]);
 

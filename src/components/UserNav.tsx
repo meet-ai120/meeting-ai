@@ -13,8 +13,9 @@ import {
 } from "./ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useNavigate } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
-export function UserNav() {
+export function UserNav({ className }: { className?: string }) {
   const navigate = useNavigate();
   const { logout, user } = useCurrentUser();
 
@@ -28,7 +29,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="no-drag relative h-8 w-8 rounded-full"
+          className={cn("no-drag relative h-8 w-8 rounded-full", className)}
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src="/avatars/01.png" alt="@shadcn" />
