@@ -11,27 +11,35 @@ import { Input } from "./ui/input";
 import { ChevronLeft, Moon, Search, Sun } from "lucide-react";
 import { UserNav } from "./UserNav";
 import { Label } from "./ui/label";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
 import ToggleTheme from "./ToggleTheme";
+import { useAppContext } from "@/store/AppContext";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
 }
 
-export default function DragWindowRegion({ title }: DragWindowRegionProps) {
+export default function DragWindowRegion() {
   const router = useRouter();
+  const { title } = useAppContext();
+  const routerState = useRouterState();
 
   return (
-    <div className="draglayer container flex w-screen items-center items-stretch justify-between p-2 pr-4">
-      <div className="flex-1">
-        <Button
-          variant="outline"
-          className="no-drag"
-          size="sm"
-          onClick={() => router.navigate({ to: "/" })}
-        >
-          <ChevronLeft size="sm" />
-        </Button>
+    <div className="draglayer flex w-screen items-center items-stretch justify-between p-2 pr-4">
+      <div className="flex flex-1 items-center gap-4">
+        {routerState.location.pathname !== "/" && (
+          <>
+            <Button
+              variant="outline"
+              className="no-drag"
+              size="sm"
+              onClick={() => router.navigate({ to: "/" })}
+            >
+              <ChevronLeft size="sm" />
+            </Button>
+            <h1 className="text-lg font-bold">{title}</h1>
+          </>
+        )}
       </div>
       <div className="flex items-center space-x-4">
         <div className="no-drag relative">

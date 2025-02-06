@@ -185,9 +185,17 @@ export default function TranscriptPopover({
         <div className="flex-1 overflow-y-auto">
           <div className="grid gap-4 p-2 px-4 pt-1">
             <div className="flex flex-col gap-2">
-              <div className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black">
-                {transcript}
-              </div>
+              {transcript
+                .split("\n\n")
+                .filter(Boolean)
+                .map((paragraph, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black"
+                  >
+                    {paragraph}
+                  </div>
+                ))}
             </div>
           </div>
         </div>

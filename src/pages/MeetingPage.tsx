@@ -113,11 +113,25 @@ export default function MeetingPage() {
       currentMeeting.description || "",
     );
     const data = res.data;
+    setCurrentMeeting((prev) =>
+      prev
+        ? { ...prev, title: res.data.title, description: res.data.description }
+        : null,
+    );
     await supabase
       .from("meeting")
       .update({ title: res.data.title, description: res.data.description })
       .eq("id", meetingId);
   };
+
+  useEffect(() => {
+    if (currentMeeting) {
+      updateState({ title: currentMeeting.title || "" });
+    }
+    return () => {
+      updateState({ title: "" });
+    };
+  }, [currentMeeting]);
 
   // useEffect(() => {
   //   console.log("MeetingPage MOUNTING");
