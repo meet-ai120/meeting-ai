@@ -1,8 +1,10 @@
 import axios from "axios";
 import { supabase, TextPromptBody } from "./supabase";
 
+const SERVER_URL = "http://161.35.197.89:8080";
+
 const server = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: SERVER_URL,
 });
 
 export const sendTextPrompt = async (
@@ -14,7 +16,7 @@ export const sendTextPrompt = async (
 
   if (onStream) {
     // Use fetch for streaming
-    const response = await fetch("http://localhost:8080/text", {
+    const response = await fetch(`${SERVER_URL}/text`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
