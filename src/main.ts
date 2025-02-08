@@ -9,6 +9,7 @@ import registerListeners from "./helpers/ipc/listeners-register";
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
+import { GET_SOURCES_CHANNEL } from "./helpers/ipc/electron/electron-channels";
 
 const inDevelopment = process.env.NODE_ENV === "development";
 
@@ -43,7 +44,7 @@ app.whenReady().then(() => {
   createWindow();
 });
 
-ipcMain.handle("getSources", async () => {
+ipcMain.handle(GET_SOURCES_CHANNEL, async () => {
   return await desktopCapturer.getSources({ types: ["window", "screen"] });
 });
 
