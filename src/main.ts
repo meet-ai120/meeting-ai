@@ -36,6 +36,7 @@ app.whenReady().then(() => {
   console.log("READY");
   session.defaultSession.setDisplayMediaRequestHandler(
     (request, callback) => {
+      console.log("DISPLAY MEDIA REQUEST", request);
       desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
         // Grant access to the first screen found.
         callback({ video: sources[0], audio: "loopback" });
