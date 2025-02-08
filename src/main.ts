@@ -1,4 +1,10 @@
-import { app, BrowserWindow, desktopCapturer, session } from "electron";
+import {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  ipcMain,
+  session,
+} from "electron";
 import registerListeners from "./helpers/ipc/listeners-register";
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
@@ -34,21 +40,11 @@ function createWindow() {
 
 app.whenReady().then(() => {
   console.log("READY");
-  session.defaultSession.setDisplayMediaRequestHandler(
-    (request, callback) => {
-      console.log("DISPLAY MEDIA REQUEST", request);
-      desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
-        // Grant access to the first screen found.
-        callback({ video: sources[0], audio: "loopback" });
-      });
-      // If true, use the system picker if available.
-      // Note: this is currently experimental. If the system picker
-      // is available, it will be used and the media request handler
-      // will not be invoked.
-    },
-    { useSystemPicker: true },
-  );
   createWindow();
+});
+
+ipcMain.handle("getSources", async () => {
+  return await desktopCapturer.getSources({ types: ["window", "screen"] });
 });
 
 //osX only

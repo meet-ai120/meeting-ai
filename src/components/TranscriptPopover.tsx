@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Download, Mic, Square } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
+import { ipcRenderer } from "electron";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
 //   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
@@ -52,19 +53,29 @@ export default function TranscriptPopover({
     }
   };
 
-  const record = () => {
+  const record = async () => {
     setIsRecording(true);
+    const inputSources = await ipcRenderer.invoke("getSources");
+    console.log("INPUT SOURCES", inputSources);
+    const source = inputSources[0];
     isRecordingRef.current = true;
 
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: {
-          echoCancellation: false, // Ensure raw audio
-          noiseSuppression: false,
-          autoGainControl: false,
+    const constraints = {
+      audio: {
+        mandatory: {
+          chromeMediaSource: "desktop",
         },
-        video: false,
-      })
+      },
+      video: {
+        mandatory: {
+          chromeMediaSource: "desktop",
+          chromeMediaSourceId: source.id,
+        },
+      },
+    };
+
+    navigator.mediaDevices
+      .getUserMedia(constraints)
       .then((stream) => {
         const mediaRecorder = new MediaRecorder(stream, {
           mimeType: "audio/webm",
