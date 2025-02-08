@@ -1,5 +1,5 @@
 import axios from "axios";
-import { TextPromptBody } from "./supabase";
+import { supabase, TextPromptBody } from "./supabase";
 
 const server = axios.create({
   baseURL: "http://localhost:8080",
@@ -9,12 +9,16 @@ export const sendTextPrompt = async (
   body: TextPromptBody,
   onStream?: (chunk: string) => void,
 ) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+
   if (onStream) {
     // Use fetch for streaming
     const response = await fetch("http://localhost:8080/text", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `${token}`,
       },
       body: JSON.stringify(body),
     });
@@ -50,16 +54,46 @@ export const sendTextPrompt = async (
   }
 };
 
-export const sendAudio = (body: FormData) => server.post("/audio", body);
+export const sendAudio = async (body: FormData) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  return server.post("/audio", body, {
+    headers: {
+      Authorization: `${token}`,
+    },
+  });
+};
 
-export const sendToCorrection = (transcript: string) =>
-  server.post("/correction", { transcript });
+export const sendToCorrection = async (transcript: string) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  return server.post(
+    "/correction",
+    { transcript },
+    {
+      headers: {
+        Authorization: `${token}`,
+      },
+    },
+  );
+};
 
-export const getTitle = (
+export const getTitle = async (
   transcript: string,
   notes: string,
   title: string,
   description: string,
-) => server.post("/title", { transcript, notes, title, description });
-
+) => {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  return server.post(
+    "/title",
+    { transcript, notes, title, description },
+    {
+      headers: {
+        Authorization: `${token}`,
+      },
+    },
+  );
+};
 export default server;
