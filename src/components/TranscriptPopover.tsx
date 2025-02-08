@@ -92,7 +92,6 @@ export default function TranscriptPopover({
   };
 
   const stop = () => {
-    isRecordingRef.current = false;
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
@@ -108,6 +107,7 @@ export default function TranscriptPopover({
         .getTracks()
         .forEach((track) => track.stop());
     }
+    isRecordingRef.current = false;
   };
 
   const sendToTranscribe = async (blob: Blob) => {

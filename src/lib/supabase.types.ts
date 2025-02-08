@@ -42,12 +42,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      profile: {
+        Row: {
+          audio_usage: number;
+          created_at: string;
+          first_name: string | null;
+          id: string;
+          last_name: string | null;
+        };
+        Insert: {
+          audio_usage?: number;
+          created_at?: string;
+          first_name?: string | null;
+          id: string;
+          last_name?: string | null;
+        };
+        Update: {
+          audio_usage?: number;
+          created_at?: string;
+          first_name?: string | null;
+          id?: string;
+          last_name?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      increment_audio_usage: {
+        Args: {
+          profile_id: string;
+          value: number;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
