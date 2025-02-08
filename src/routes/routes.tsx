@@ -4,6 +4,7 @@ import { RootRoute } from "./__root";
 import SignUp from "@/pages/SignUp";
 import MeetingPage from "@/pages/MeetingPage";
 import ProfilePage from "@/pages/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
 
 // TODO: Steps to add a new route:
 // 1. Create a new page component in the '../pages/' directory (e.g., NewPage.tsx)
@@ -48,9 +49,16 @@ export const ProfileRoute = createRoute({
   component: ProfilePage,
 });
 
+export const SettingsRoute = createRoute({
+  getParentRoute: () => RootRoute,
+  path: "/settings",
+  component: SettingsPage,
+});
+
 export const rootTree = RootRoute.addChildren([
   HomeRoute,
   SignUpRoute,
   MeetingRoute,
   ProfileRoute,
+  SettingsRoute,
 ]);

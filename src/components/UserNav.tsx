@@ -37,7 +37,7 @@ export function UserNav({ className }: { className?: string }) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-60" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user?.email}</p>
@@ -50,15 +50,15 @@ export function UserNav({ className }: { className?: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
             Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut> */}
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          {/* <DropdownMenuItem>
             Billing
             <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
+          </DropdownMenuItem> */}
+          <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
             Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌘S</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           {/* <DropdownMenuItem>New Team</DropdownMenuItem> */}
         </DropdownMenuGroup>
