@@ -77,7 +77,9 @@ export default function TranscriptPopover({
     try {
       // Start microphone recording
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+        },
         video: false,
       });
       micStreamRef.current = micStream;

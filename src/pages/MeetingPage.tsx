@@ -162,14 +162,14 @@ export default function MeetingPage() {
           value={currentMeeting?.notes}
           onChange={handleUpdateNote}
           className="flex h-full w-full flex-col overflow-hidden"
-          editorContentClassName="p-5 overflow-y-auto"
+          editorContentClassName="p-5 overflow-y-auto mb-14"
           output="html"
           placeholder="Type your description here..."
           autofocus={true}
           editable={true}
           disabled={isEnhancing}
         />
-        <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-[20px] left-1/2 -translate-x-1/2">
           <TranscriptPopover
             transcript={currentMeeting?.transcript || []}
             setTranscript={(callback) => {

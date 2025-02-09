@@ -9,7 +9,7 @@ export default function ToggleTheme({ className }: { className?: string }) {
   return (
     <Button
       onClick={toggleTheme}
-      // variant={"ghost"}
+      variant={"ghost"}
       size="icon"
       className={`rounded-full ${className}`}
     >
