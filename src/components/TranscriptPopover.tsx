@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { Download, Mic, Square } from "lucide-react";
+import { Download, Mic, Square, Monitor } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
 // const messages = [
@@ -29,7 +29,9 @@ export default function TranscriptPopover({
 }: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const screenRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const screenIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
 
   useEffect(() => {
@@ -46,67 +48,114 @@ export default function TranscriptPopover({
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (isRecording) {
-      stop();
+      stopRecording();
     } else {
-      record();
+      startRecording();
     }
   };
 
-  const record = () => {
-    setIsRecording(true);
-    isRecordingRef.current = true;
-
-    navigator.mediaDevices
-      .getUserMedia({
-        audio: {
-          echoCancellation: false, // Ensure raw audio
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
+  const startRecording = async () => {
+    try {
+      // Start microphone recording
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
         video: false,
-      })
-      .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
-        mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            sendToTranscribe(event.data);
-          }
-        };
-
-        mediaRecorder.start();
-        intervalRef.current = setInterval(() => {
-          mediaRecorder.requestData();
-          mediaRecorder.stop();
-
-          mediaRecorder.start();
-        }, 5000);
-      })
-      .catch((error) => {
-        console.error("Error capturing audio:", error);
-        setIsRecording(false);
       });
+
+      const micRecorder = new MediaRecorder(micStream, {
+        mimeType: "audio/webm",
+      });
+      mediaRecorderRef.current = micRecorder;
+
+      micRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          sendToTranscribe(event.data);
+        }
+      };
+
+      // Start screen audio recording
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+
+      const audioStream = new MediaStream(screenStream.getAudioTracks());
+      const screenRecorder = new MediaRecorder(audioStream, {
+        mimeType: "audio/webm",
+      });
+      screenRecorderRef.current = screenRecorder;
+
+      screenRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          sendToTranscribe(event.data);
+        }
+      };
+
+      // Start both recorders
+      micRecorder.start();
+      screenRecorder.start();
+
+      // Set up intervals for both recorders
+      intervalRef.current = setInterval(() => {
+        micRecorder.requestData();
+        micRecorder.stop();
+        micRecorder.start();
+      }, 5000);
+
+      screenIntervalRef.current = setInterval(() => {
+        screenRecorder.requestData();
+        screenRecorder.stop();
+        screenRecorder.start();
+      }, 4000);
+
+      // Stop video tracks since we don't need them
+      screenStream.getVideoTracks().forEach((track) => track.stop());
+
+      setIsRecording(true);
+      isRecordingRef.current = true;
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert(
+        "Microphone and screen audio access are required. Please enable them in system settings.",
+      );
+      setIsRecording(false);
+      isRecordingRef.current = false;
+    }
   };
 
-  const stop = () => {
+  const stopRecording = () => {
+    // Stop microphone recording
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
-      setIsRecording(false);
       mediaRecorderRef.current.requestData();
-
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream
         .getTracks()
         .forEach((track) => track.stop());
     }
+
+    // Stop screen recording
+    if (
+      screenRecorderRef.current &&
+      screenRecorderRef.current.state !== "inactive"
+    ) {
+      screenRecorderRef.current.stop();
+      screenRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+
+    // Clear all intervals
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (screenIntervalRef.current) {
+      clearInterval(screenIntervalRef.current);
+    }
+
+    setIsRecording(false);
     isRecordingRef.current = false;
   };
 
@@ -152,7 +201,6 @@ export default function TranscriptPopover({
             onClick={handleRecord}
             variant={isRecording ? "destructive" : undefined}
             size="icon"
-            // className={isRecording ? "text-red-500" : ""}
           >
             {isRecording ? (
               <Square className="h-4 w-4" />
@@ -166,7 +214,6 @@ export default function TranscriptPopover({
               e.stopPropagation();
               onEnhance();
             }}
-            // variant=""
           >
             Enhance
           </Button>
