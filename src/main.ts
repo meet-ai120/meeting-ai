@@ -1,10 +1,19 @@
-import { app, BrowserWindow, desktopCapturer, session } from "electron";
-import registerListeners from "./helpers/ipc/listeners-register";
+import {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  session,
+  ipcMain,
+} from "electron";
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
+import recorder from "node-record-lpcm16";
 
 const inDevelopment = process.env.NODE_ENV === "development";
+
+// Store active recording instance
+let systemAudioRecorder: any = null;
 
 function createWindow() {
   const preload = path.join(__dirname, "preload.js");
@@ -21,7 +30,7 @@ function createWindow() {
     },
     titleBarStyle: "hidden",
   });
-  registerListeners(mainWindow);
+
   mainWindow.webContents.openDevTools();
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -59,6 +68,56 @@ app.whenReady().then(() => {
   //   { useSystemPicker: true },
   // );
   createWindow();
+});
+
+// Setup IPC handlers for system audio recording
+ipcMain.handle("start-system-audio", async () => {
+  try {
+    if (systemAudioRecorder) {
+      return { error: "Recording already in progress" };
+    }
+
+    systemAudioRecorder = recorder.record({
+      sampleRate: 16000,
+      channels: 1,
+      audioType: "system",
+    });
+
+    const chunks: Buffer[] = [];
+
+    systemAudioRecorder
+      .stream()
+      .on("data", (chunk: Buffer) => {
+        chunks.push(chunk);
+        // Send chunk to renderer every 5 seconds
+        if (Buffer.concat(chunks).length >= 16000 * 2 * 5) {
+          // 5 seconds of audio
+          const audioBlob = Buffer.concat(chunks);
+          BrowserWindow.getAllWindows()[0].webContents.send(
+            "system-audio-data",
+            audioBlob,
+          );
+          chunks.length = 0; // Clear chunks
+        }
+      })
+      .on("error", (err: Error) => {
+        console.error("System audio recording error:", err);
+      });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to start system audio recording:", error);
+    return { error: "Failed to start system audio recording" };
+  }
+});
+
+ipcMain.handle("stop-system-audio", () => {
+  if (systemAudioRecorder) {
+    systemAudioRecorder.stop();
+    systemAudioRecorder = null;
+    return { success: true };
+  }
+  return { error: "No recording in progress" };
 });
 
 //osX only

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { Download, Mic, Square, Speaker } from "lucide-react";
+import { Download, Mic, Square } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
 // const messages = [
@@ -13,22 +13,23 @@ import { supabase } from "@/lib/supabase";
 
 // const messages = SAMPLE_TRANSCRIPT;
 
+declare global {
+  interface Window {
+    systemAudio: {
+      startRecording: () => Promise<{ success?: boolean; error?: string }>;
+      stopRecording: () => Promise<{ success?: boolean; error?: string }>;
+      onData: (callback: (data: Buffer) => void) => void;
+      removeDataListener: (callback: (data: Buffer) => void) => void;
+    };
+  }
+}
+
 interface TranscriptPopoverProps {
   meetingId: number;
   onEnhance: () => void;
   transcript: string;
   // Use state update function
   setTranscript: (callback: (prev: string) => string) => void;
-}
-
-declare global {
-  interface Window {
-    electron: {
-      startSystemAudioRecording: () => void;
-      stopSystemAudioRecording: () => void;
-      onSystemAudioData: (callback: (data: Buffer) => void) => () => void;
-    };
-  }
 }
 
 export default function TranscriptPopover({
@@ -38,11 +39,9 @@ export default function TranscriptPopover({
   setTranscript,
 }: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isSystemRecording, setIsSystemRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
-  const systemAudioCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,93 +54,96 @@ export default function TranscriptPopover({
     })();
   }, [transcript, meetingId]);
 
-  const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSystemAudioData = async (data: Buffer) => {
+    const blob = new Blob([data], { type: "audio/wav" });
+    const audioFile = new File(
+      [blob],
+      `system-audio-${new Date().getTime()}.wav`,
+      {
+        type: "audio/wav",
+      },
+    );
+
+    const formData = new FormData();
+    formData.append("audio", audioFile);
+
+    const response = await sendAudio(formData);
+    const responseData = await response.data;
+
+    setTranscript((prev) => {
+      if (!isRecordingRef.current) {
+        handleCorrection(prev + responseData.text);
+      }
+      return prev + responseData.text;
+    });
+  };
+
+  const handleRecord = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (isRecording) {
       stop();
     } else {
-      record();
+      await record();
     }
   };
 
-  const handleSystemRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (isSystemRecording) {
-      stopSystemAudio();
-    } else {
-      recordSystemAudio();
-    }
-  };
-
-  const recordSystemAudio = () => {
-    setIsSystemRecording(true);
-    window.electron.startSystemAudioRecording();
-
-    // Set up listener for system audio data
-    const cleanup = window.electron.onSystemAudioData(
-      async (buffer: Buffer) => {
-        const blob = new Blob([buffer], { type: "audio/wav" });
-        await sendToTranscribe(blob);
-      },
-    );
-
-    systemAudioCleanupRef.current = cleanup;
-  };
-
-  const stopSystemAudio = () => {
-    setIsSystemRecording(false);
-    window.electron.stopSystemAudioRecording();
-    if (systemAudioCleanupRef.current) {
-      systemAudioCleanupRef.current();
-      systemAudioCleanupRef.current = null;
-    }
-  };
-
-  const record = () => {
+  const record = async () => {
     setIsRecording(true);
     isRecordingRef.current = true;
 
-    navigator.mediaDevices
-      .getUserMedia({
+    // Start system audio recording
+    const systemResult = await window.systemAudio.startRecording();
+    if (systemResult.error) {
+      console.error("Failed to start system audio:", systemResult.error);
+    } else {
+      window.systemAudio.onData(handleSystemAudioData);
+    }
+
+    // Start microphone recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
-      })
-      .then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
-        mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            sendToTranscribe(event.data);
-          }
-        };
-
-        mediaRecorder.start();
-        intervalRef.current = setInterval(() => {
-          mediaRecorder.requestData();
-          mediaRecorder.stop();
-
-          mediaRecorder.start();
-        }, 5000);
-      })
-      .catch((error) => {
-        alert(
-          "Microphone access is required. Please enable it in system settings.",
-        );
-
-        console.error("Error capturing audio:", error);
-        setIsRecording(false);
       });
+
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          sendToTranscribe(event.data);
+        }
+      };
+
+      mediaRecorder.start();
+      intervalRef.current = setInterval(() => {
+        mediaRecorder.requestData();
+        mediaRecorder.stop();
+        mediaRecorder.start();
+      }, 5000);
+    } catch (error) {
+      alert(
+        "Microphone access is required. Please enable it in system settings.",
+      );
+      console.error("Error capturing audio:", error);
+      setIsRecording(false);
+    }
   };
 
-  const stop = () => {
+  const stop = async () => {
+    setIsRecording(false);
+    isRecordingRef.current = false;
+
+    // Stop system audio recording
+    await window.systemAudio.stopRecording();
+
+    // Stop microphone recording
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
     ) {
-      setIsRecording(false);
       mediaRecorderRef.current.requestData();
 
       if (intervalRef.current) {
@@ -152,7 +154,6 @@ export default function TranscriptPopover({
         .getTracks()
         .forEach((track) => track.stop());
     }
-    isRecordingRef.current = false;
   };
 
   const sendToTranscribe = async (blob: Blob) => {
@@ -189,6 +190,15 @@ export default function TranscriptPopover({
     setTranscript((prev) => text);
   };
 
+  // Clean up system audio listener on unmount
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stop();
+      }
+    };
+  }, []);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -202,17 +212,6 @@ export default function TranscriptPopover({
               <Square className="h-4 w-4" />
             ) : (
               <Mic className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            onClick={handleSystemRecord}
-            variant={isSystemRecording ? "destructive" : undefined}
-            size="icon"
-          >
-            {isSystemRecording ? (
-              <Square className="h-4 w-4" />
-            ) : (
-              <Speaker className="h-4 w-4" />
             )}
           </Button>
           <Button variant="outline">Transcript</Button>

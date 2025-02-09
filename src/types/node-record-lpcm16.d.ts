@@ -1,18 +1,18 @@
 declare module "node-record-lpcm16" {
-  interface RecorderInstance {
-    stop: () => void;
-    stream: () => NodeJS.ReadableStream;
-  }
-
-  interface RecorderOptions {
-    sampleRate: number;
-    channels: number;
-    audioType: string;
-    threshold: number;
+  interface RecordOptions {
+    sampleRate?: number;
+    channels?: number;
+    audioType?: "mic" | "system";
+    [key: string]: any;
   }
 
   interface Recorder {
-    record: (options: RecorderOptions) => RecorderInstance;
+    record(options?: RecordOptions): RecorderInstance;
+  }
+
+  interface RecorderInstance {
+    stream(): NodeJS.ReadableStream;
+    stop(): void;
   }
 
   const recorder: Recorder;
