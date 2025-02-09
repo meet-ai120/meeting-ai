@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>electron-shadcn Template</title>
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self';" />
+    <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self';" /> -->
     <link rel="stylesheet" href="/src/styles/global.css" />
   </head>
   <body>
     <div id="app" />
     <script type="module" src="/src/renderer.ts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.22/dist/bundle.min.js"></script>
   </body>
 </html>
