@@ -58,11 +58,7 @@ export default function TranscriptPopover({
 
     navigator.mediaDevices
       .getUserMedia({
-        audio: {
-          echoCancellation: false, // Ensure raw audio
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
+        audio: true,
         video: false,
       })
       .then((stream) => {
@@ -86,6 +82,10 @@ export default function TranscriptPopover({
         }, 5000);
       })
       .catch((error) => {
+        alert(
+          "Microphone access is required. Please enable it in system settings.",
+        );
+
         console.error("Error capturing audio:", error);
         setIsRecording(false);
       });

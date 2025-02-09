@@ -16,12 +16,13 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInSubFrames: false,
-
+      media: true,
       preload: preload,
     },
     titleBarStyle: "hidden",
   });
   registerListeners(mainWindow);
+  mainWindow.webContents.openDevTools();
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -34,20 +35,29 @@ function createWindow() {
 
 app.whenReady().then(() => {
   console.log("READY");
-  session.defaultSession.setDisplayMediaRequestHandler(
-    (request, callback) => {
-      console.log("DISPLAY MEDIA REQUEST", request);
-      desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
-        // Grant access to the first screen found.
-        callback({ video: sources[0], audio: "loopback" });
-      });
-      // If true, use the system picker if available.
-      // Note: this is currently experimental. If the system picker
-      // is available, it will be used and the media request handler
-      // will not be invoked.
+  session.defaultSession.setPermissionRequestHandler(
+    (webContents, permission, callback) => {
+      if (permission === "media") {
+        callback(true); // Allow media access
+      } else {
+        callback(false);
+      }
     },
-    { useSystemPicker: true },
   );
+  // session.defaultSession.setDisplayMediaRequestHandler(
+  //   (request, callback) => {
+  //     console.log("DISPLAY MEDIA REQUEST", request);
+  //     desktopCapturer.getSources({ types: ["screen"] }).then((sources) => {
+  //       // Grant access to the first screen found.
+  //       callback({ video: sources[0], audio: "loopback" });
+  //     });
+  //     // If true, use the system picker if available.
+  //     // Note: this is currently experimental. If the system picker
+  //     // is available, it will be used and the media request handler
+  //     // will not be invoked.
+  //   },
+  //   { useSystemPicker: true },
+  // );
   createWindow();
 });
 
