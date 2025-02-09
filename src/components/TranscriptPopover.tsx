@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { Download, Mic, Square } from "lucide-react";
+import { Download, Mic, Square, Speaker } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
 // const messages = [
@@ -21,6 +21,16 @@ interface TranscriptPopoverProps {
   setTranscript: (callback: (prev: string) => string) => void;
 }
 
+declare global {
+  interface Window {
+    electron: {
+      startSystemAudioRecording: () => void;
+      stopSystemAudioRecording: () => void;
+      onSystemAudioData: (callback: (data: Buffer) => void) => () => void;
+    };
+  }
+}
+
 export default function TranscriptPopover({
   meetingId,
   onEnhance,
@@ -28,9 +38,11 @@ export default function TranscriptPopover({
   setTranscript,
 }: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [isSystemRecording, setIsSystemRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
+  const systemAudioCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -49,6 +61,39 @@ export default function TranscriptPopover({
       stop();
     } else {
       record();
+    }
+  };
+
+  const handleSystemRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (isSystemRecording) {
+      stopSystemAudio();
+    } else {
+      recordSystemAudio();
+    }
+  };
+
+  const recordSystemAudio = () => {
+    setIsSystemRecording(true);
+    window.electron.startSystemAudioRecording();
+
+    // Set up listener for system audio data
+    const cleanup = window.electron.onSystemAudioData(
+      async (buffer: Buffer) => {
+        const blob = new Blob([buffer], { type: "audio/wav" });
+        await sendToTranscribe(blob);
+      },
+    );
+
+    systemAudioCleanupRef.current = cleanup;
+  };
+
+  const stopSystemAudio = () => {
+    setIsSystemRecording(false);
+    window.electron.stopSystemAudioRecording();
+    if (systemAudioCleanupRef.current) {
+      systemAudioCleanupRef.current();
+      systemAudioCleanupRef.current = null;
     }
   };
 
@@ -152,12 +197,22 @@ export default function TranscriptPopover({
             onClick={handleRecord}
             variant={isRecording ? "destructive" : undefined}
             size="icon"
-            // className={isRecording ? "text-red-500" : ""}
           >
             {isRecording ? (
               <Square className="h-4 w-4" />
             ) : (
               <Mic className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            onClick={handleSystemRecord}
+            variant={isSystemRecording ? "destructive" : undefined}
+            size="icon"
+          >
+            {isSystemRecording ? (
+              <Square className="h-4 w-4" />
+            ) : (
+              <Speaker className="h-4 w-4" />
             )}
           </Button>
           <Button variant="outline">Transcript</Button>
@@ -166,7 +221,6 @@ export default function TranscriptPopover({
               e.stopPropagation();
               onEnhance();
             }}
-            // variant=""
           >
             Enhance
           </Button>
@@ -175,10 +229,7 @@ export default function TranscriptPopover({
       <PopoverContent className="flex h-[500px] w-[450px] flex-col overflow-hidden p-0">
         <div className="flex items-center justify-between p-2 px-4">
           <span className="text-lg font-bold">Transcript</span>
-          <Button
-            variant="outline"
-            // onClick={() => handleUpdate(messages.join(" "))}
-          >
+          <Button variant="outline">
             <Download />
           </Button>
         </div>
