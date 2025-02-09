@@ -1,10 +1,9 @@
 .minimal-tiptap-editor .ProseMirror code.inline {
-  @apply rounded border border-[var(--mt-code-color)] bg-[var(--mt-code-background)] px-1 py-0.5 text-sm;
+  @apply rounded border border-border bg-muted px-1 py-0.5 text-sm;
 }
 
 .minimal-tiptap-editor .ProseMirror pre {
-  @apply relative overflow-auto rounded border font-mono text-sm;
-  @apply border-[var(--mt-pre-border)] bg-[var(--mt-pre-background)] text-[var(--mt-pre-color)];
+  @apply relative overflow-auto rounded border border-border bg-muted font-mono text-sm text-foreground;
   @apply hyphens-none whitespace-pre text-left;
 }
 
@@ -22,7 +21,7 @@
   .hljs-function,
   .hljs-built_in,
   .hljs-builtin-name {
-    color: var(--hljs-keyword);
+    @apply text-blue-600 dark:text-blue-400;
   }
 
   .hljs-attr,
@@ -32,7 +31,7 @@
   .hljs-variable,
   .hljs-template-variable,
   .hljs-params {
-    color: var(--hljs-attr);
+    @apply text-teal-600 dark:text-teal-400;
   }
 
   .hljs-name,
@@ -40,40 +39,40 @@
   .hljs-link,
   .hljs-type,
   .hljs-addition {
-    color: var(--hljs-name);
+    @apply text-green-600 dark:text-green-400;
   }
 
   .hljs-string,
   .hljs-bullet {
-    color: var(--hljs-string);
+    @apply text-orange-600 dark:text-orange-400;
   }
 
   .hljs-title,
   .hljs-subst,
   .hljs-section {
-    color: var(--hljs-title);
+    @apply text-yellow-600 dark:text-yellow-400;
   }
 
   .hljs-literal,
   .hljs-type,
   .hljs-deletion {
-    color: var(--hljs-literal);
+    @apply text-red-600 dark:text-red-400;
   }
 
   .hljs-selector-tag,
   .hljs-selector-id,
   .hljs-selector-class {
-    color: var(--hljs-selector-tag);
+    @apply text-purple-600 dark:text-purple-400;
   }
 
   .hljs-number {
-    color: var(--hljs-number);
+    @apply text-green-600 dark:text-green-400;
   }
 
   .hljs-comment,
   .hljs-meta,
   .hljs-quote {
-    color: var(--hljs-comment);
+    @apply text-gray-500 dark:text-gray-400;
   }
 
   .hljs-emphasis {

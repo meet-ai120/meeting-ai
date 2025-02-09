@@ -16,6 +16,8 @@ import { useMinimalTiptapEditor } from "./hooks/use-minimal-tiptap";
 import { MeasuredContainer } from "./components/measured-container";
 import { Markdown } from "tiptap-markdown";
 import StarterKit from "@tiptap/starter-kit";
+import { useTheme } from "@/hooks/useTheme";
+
 export interface MinimalTiptapProps
   extends Omit<UseMinimalTiptapEditorProps, "onUpdate"> {
   value?: Content;
@@ -91,6 +93,7 @@ export const MinimalTiptapEditor = React.forwardRef<
       extensions: [StarterKit, Markdown],
       ...props,
     });
+    const { isDark } = useTheme();
 
     React.useEffect(() => {
       if (editorRef) {
@@ -103,27 +106,29 @@ export const MinimalTiptapEditor = React.forwardRef<
     }
 
     return (
-      <MeasuredContainer
-        as="div"
-        name="editor"
-        ref={ref}
-        className={cn(
-          "flex h-full min-h-72 w-full flex-col border-input shadow-sm focus-within:border-primary",
-          className,
-        )}
-      >
-        {/* <Toolbar editor={editor} /> */}
-        <EditorContent
-          editor={editor}
+      <div className={cn(isDark && "dark", "h-full")}>
+        <MeasuredContainer
+          as="div"
+          name="editor"
+          ref={ref}
           className={cn(
-            "minimal-tiptap-editor flex-1 overflow-hidden",
-            editorContentClassName,
+            "flex h-full min-h-72 w-full flex-col bg-accent text-foreground shadow-sm focus-within:border-primary",
+            className,
           )}
-          onClick={() => editor.chain().focus().run()}
-          disabled={disabled}
-        />
-        <LinkBubbleMenu editor={editor} />
-      </MeasuredContainer>
+        >
+          {/* <Toolbar editor={editor} /> */}
+          <EditorContent
+            editor={editor}
+            className={cn(
+              "minimal-tiptap-editor flex-1 overflow-hidden",
+              editorContentClassName,
+            )}
+            onClick={() => editor.chain().focus().run()}
+            disabled={disabled}
+          />
+          <LinkBubbleMenu editor={editor} />
+        </MeasuredContainer>
+      </div>
     );
   },
 );
