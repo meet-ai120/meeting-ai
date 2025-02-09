@@ -11,6 +11,7 @@ import { MeetingRoute } from "@/routes/routes";
 import { MeetingItem } from "@/components/MeetingItem";
 import { useMeetings } from "@/lib/queries";
 import { MeetingItemsSkeleton } from "@/components/Skeleton";
+import { AudioRecorder } from "@/components/AudioRecorder";
 
 // const meetings: Meeting[] = [
 //   {
@@ -118,7 +119,9 @@ export default function HomePage() {
     <Navigate to="/signup" />
   ) : (
     <div className="flex h-full flex-col">
-      <div className="h-40 w-full bg-slate-200" />
+      <div className="h-40 w-full bg-slate-200">
+        <AudioRecorder />
+      </div>
       <hr className="w-full" />
       <div className="flex flex-1 flex-col items-center overflow-auto p-4">
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2">

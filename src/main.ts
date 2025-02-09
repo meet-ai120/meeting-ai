@@ -8,12 +8,54 @@ import {
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
-import recorder from "node-record-lpcm16";
+import ffmpeg from "fluent-ffmpeg";
+import { Writable } from "stream";
+
+const ffmpegPath = path.join(__dirname, "resources", "ffmpeg", "ffmpeg.exe"); // Path to the bundled FFmpeg binary
+
+ffmpeg.setFfmpegPath(ffmpegPath); // Set the FFmpeg path for fluent-ffmpeg
 
 const inDevelopment = process.env.NODE_ENV === "development";
 
-// Store active recording instance
-let systemAudioRecorder: any = null;
+let recording: ffmpeg.FfmpegCommand | null = null;
+let outputPath: string | null = null;
+
+ipcMain.handle("start-recording", async () => {
+  if (recording) return;
+
+  outputPath = path.join(
+    app.getPath("downloads"),
+    `recording-${Date.now()}.wav`,
+  );
+
+  recording = ffmpeg()
+    .input("audio=Stereo Mix")
+    .inputFormat("dshow")
+    .audioCodec("pcm_s16le")
+    .toFormat("wav")
+    .on("end", () => {
+      console.log("Recording finished");
+    })
+    .on("error", (err) => {
+      console.error("Recording error:", err);
+    });
+
+  recording.save(outputPath);
+});
+
+ipcMain.handle("stop-recording", async () => {
+  if (!recording || !outputPath) return "";
+
+  return new Promise<string>((resolve) => {
+    recording!.on("end", () => {
+      resolve(outputPath!);
+      recording = null;
+      outputPath = null;
+    });
+
+    recording!.kill("SIGTERM");
+  });
+});
 
 function createWindow() {
   const preload = path.join(__dirname, "preload.js");
@@ -25,7 +67,6 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: true,
       nodeIntegrationInSubFrames: false,
-      media: true,
       preload: preload,
     },
     titleBarStyle: "hidden",
@@ -68,56 +109,6 @@ app.whenReady().then(() => {
   //   { useSystemPicker: true },
   // );
   createWindow();
-});
-
-// Setup IPC handlers for system audio recording
-ipcMain.handle("start-system-audio", async () => {
-  try {
-    if (systemAudioRecorder) {
-      return { error: "Recording already in progress" };
-    }
-
-    systemAudioRecorder = recorder.record({
-      sampleRate: 16000,
-      channels: 1,
-      audioType: "system",
-    });
-
-    const chunks: Buffer[] = [];
-
-    systemAudioRecorder
-      .stream()
-      .on("data", (chunk: Buffer) => {
-        chunks.push(chunk);
-        // Send chunk to renderer every 5 seconds
-        if (Buffer.concat(chunks).length >= 16000 * 2 * 5) {
-          // 5 seconds of audio
-          const audioBlob = Buffer.concat(chunks);
-          BrowserWindow.getAllWindows()[0].webContents.send(
-            "system-audio-data",
-            audioBlob,
-          );
-          chunks.length = 0; // Clear chunks
-        }
-      })
-      .on("error", (err: Error) => {
-        console.error("System audio recording error:", err);
-      });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to start system audio recording:", error);
-    return { error: "Failed to start system audio recording" };
-  }
-});
-
-ipcMain.handle("stop-system-audio", () => {
-  if (systemAudioRecorder) {
-    systemAudioRecorder.stop();
-    systemAudioRecorder = null;
-    return { success: true };
-  }
-  return { error: "No recording in progress" };
 });
 
 //osX only
