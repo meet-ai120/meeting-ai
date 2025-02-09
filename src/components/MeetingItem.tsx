@@ -20,15 +20,25 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
   const deleteMutation = useDeleteMeeting();
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => {
         navigate({
           to: "/meeting/$meetingId",
           params: { meetingId: meeting.id.toString() },
         });
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          navigate({
+            to: "/meeting/$meetingId",
+            params: { meetingId: meeting.id.toString() },
+          });
+        }
+      }}
       className={cn(
-        "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
+        "flex cursor-pointer flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
       )}
     >
       <div className="flex w-full flex-col gap-1">
@@ -78,8 +88,8 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
         </div>
         {/* <div className="text-xs font-medium">{meeting.description}</div> */}
       </div>
-      <div className="line-clamp-2 text-xs text-muted-foreground">
-        {meeting.description.substring(0, 300)}
+      <div className="line-clamp-3 text-xs text-muted-foreground">
+        {meeting.description}
       </div>
 
       {/* <div className="flex items-center gap-2">
@@ -93,6 +103,6 @@ export function MeetingItem({ meeting }: { meeting: Meeting }) {
           </Badge>
         ))}
       </div> */}
-    </button>
+    </div>
   );
 }

@@ -24,6 +24,10 @@ export function UserNav({ className }: { className?: string }) {
     navigate({ to: "/signup" });
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
