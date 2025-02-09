@@ -151,7 +151,7 @@ export function LoginForm({
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Loading..." : showOTP ? "Verify" : "Continue"}
               </Button>
-              {!showOTP && (
+              {/* {!showOTP && (
                 <Button
                   type="button"
                   variant="outline"
@@ -160,7 +160,7 @@ export function LoginForm({
                 >
                   Continue with Google
                 </Button>
-              )}
+              )} */}
             </div>
           </form>
         </CardContent>
