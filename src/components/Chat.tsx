@@ -7,7 +7,12 @@ import { Check, Loader2, Plus, Send } from "lucide-react";
 import { Input } from "./ui/input";
 
 import { cn } from "@/lib/utils";
-import { ChatItem, Meeting, supabase } from "@/lib/supabase";
+import {
+  ChatItem,
+  Meeting,
+  MeetingWithTranscript,
+  supabase,
+} from "@/lib/supabase";
 import { useCallback, useEffect, useState } from "react";
 import { QUERY_KEYS } from "@/lib/queries";
 import { queryClient } from "@/lib/queries";
@@ -15,7 +20,7 @@ import { sendTextPrompt } from "@/lib/server";
 
 interface ChatProps {
   chatHistory: ChatItem[];
-  meeting?: Meeting | null;
+  meeting?: MeetingWithTranscript | null;
 }
 
 export function Chat({ chatHistory, meeting }: ChatProps) {
@@ -68,7 +73,10 @@ export function Chat({ chatHistory, meeting }: ChatProps) {
     try {
       const res = await sendTextPrompt(
         {
-          meeting: meeting,
+          meeting: {
+            ...meeting,
+            transcript: JSON.stringify(meeting?.transcript),
+          },
           type: "chat",
           note: "",
           chatQuestion: input,

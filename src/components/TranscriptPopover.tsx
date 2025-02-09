@@ -3,8 +3,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Download, Mic, Square, Monitor } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
-import { supabase } from "@/lib/supabase";
+import { supabase, TranscriptItem } from "@/lib/supabase";
 import { MicVAD, utils } from "@ricky0123/vad-web";
+import { cn } from "@/lib/utils";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
 //   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
@@ -23,9 +24,11 @@ const VAD_CONFIG = {
 interface TranscriptPopoverProps {
   meetingId: number;
   onEnhance: () => void;
-  transcript: string;
+  transcript: TranscriptItem[];
   // Use state update function
-  setTranscript: (callback: (prev: string) => string) => void;
+  setTranscript: (
+    callback: (prev: TranscriptItem[]) => TranscriptItem[],
+  ) => void;
 }
 
 export default function TranscriptPopover({
@@ -42,17 +45,24 @@ export default function TranscriptPopover({
   const screenVadRef = useRef<MicVAD | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     (async () => {
-      if (transcript) {
+      if (transcript.length > 2) {
         await supabase
           .from("meeting")
-          .update({ transcript: transcript })
+          .update({ transcript: JSON.stringify(transcript) })
           .eq("id", meetingId);
       }
     })();
   }, [transcript, meetingId]);
+
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [transcript]);
 
   const handleRecord = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -83,7 +93,7 @@ export default function TranscriptPopover({
           console.log("Mic speech ended");
           const wavBuffer = utils.encodeWAV(audio);
           const webmBlob = new Blob([wavBuffer], { type: "audio/webm" });
-          sendToTranscribe(webmBlob);
+          sendToTranscribe(webmBlob, Date.now(), "mic");
         },
         onSpeechStart: () => {
           console.log("Mic speech started");
@@ -112,7 +122,7 @@ export default function TranscriptPopover({
           console.log("Screen speech ended");
           const wavBuffer = utils.encodeWAV(audio);
           const webmBlob = new Blob([wavBuffer], { type: "audio/webm" });
-          sendToTranscribe(webmBlob);
+          sendToTranscribe(webmBlob, Date.now(), "screen");
         },
         onSpeechStart: () => {
           console.log("Screen speech started");
@@ -182,7 +192,11 @@ export default function TranscriptPopover({
     isRecordingRef.current = false;
   };
 
-  const sendToTranscribe = async (blob: Blob) => {
+  const sendToTranscribe = async (
+    blob: Blob,
+    timestamp: number,
+    source: TranscriptItem["source"],
+  ) => {
     console.log("SENDING TO TRANSCRIBE");
     const newBlob = new Blob([blob], {
       type: "audio/webm; codecs=opus",
@@ -202,19 +216,30 @@ export default function TranscriptPopover({
     const data = await response.data;
     console.log("Is recording", isRecordingRef.current);
     setTranscript((prev) => {
-      if (!isRecordingRef.current) {
-        handleCorrection(prev + data.text);
-      }
-      return prev + data.text;
+      return [
+        ...prev,
+        {
+          content: data.text,
+          source,
+          timestamp,
+        },
+      ];
     });
   };
+
+  useEffect(() => {
+    return () => {
+      stopRecording();
+    };
+  }, []);
 
   const handleCorrection = async (transcript: string) => {
     console.log("Sending to correction");
     const response = await sendToCorrection(transcript);
     const text = await response.data.response;
-    setTranscript((prev) => text);
+    // setTranscript((prev) => text);
   };
+  console.log("TRANSCRIPT", transcript);
 
   return (
     <Popover>
@@ -245,27 +270,34 @@ export default function TranscriptPopover({
       <PopoverContent className="flex h-[500px] w-[450px] flex-col overflow-hidden p-0">
         <div className="flex items-center justify-between p-2 px-4">
           <span className="text-lg font-bold">Transcript</span>
-          <Button
-            variant="outline"
-            // onClick={() => handleUpdate(messages.join(" "))}
-          >
+          <Button variant="outline">
             <Download />
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto">
           <div className="grid gap-4 p-2 px-4 pt-1">
-            <div className="flex flex-col gap-2">
-              {transcript
-                .split("\n\n")
-                .filter(Boolean)
-                .map((paragraph, index) => (
+            <div className="flex w-full flex-col gap-2">
+              {transcript.map((item, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex w-full",
+                    item.source === "mic" ? "justify-end" : "justify-start",
+                  )}
+                >
                   <div
-                    key={index}
-                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-black"
+                    className={cn(
+                      "w-fit max-w-[80%] break-words rounded-lg px-3 py-2 text-sm",
+                      item.source === "mic"
+                        ? "ml-auto rounded-br-none bg-primary text-primary-foreground"
+                        : "rounded-bl-none bg-muted",
+                    )}
                   >
-                    {paragraph}
+                    {item.content}
                   </div>
-                ))}
+                </div>
+              ))}
+              <div ref={bottomRef} />
             </div>
           </div>
         </div>

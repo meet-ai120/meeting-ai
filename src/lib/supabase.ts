@@ -20,9 +20,19 @@ export interface ChatItem {
   content: string;
 }
 
+export interface TranscriptItem {
+  source: "mic" | "screen";
+  content: string;
+  timestamp: number;
+}
+
 export interface TextPromptBody {
   meeting: Meeting;
   type: "summary" | "chat";
   note: string;
   chatQuestion: string;
 }
+
+export type MeetingWithTranscript = Omit<Meeting, "transcript"> & {
+  transcript: TranscriptItem[];
+};

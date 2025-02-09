@@ -1,4 +1,9 @@
-import { ChatItem, Meeting } from "@/lib/supabase";
+import {
+  ChatItem,
+  Meeting,
+  MeetingWithTranscript,
+  TranscriptItem,
+} from "@/lib/supabase";
 import { Link, useParams } from "@tanstack/react-router";
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
@@ -21,7 +26,8 @@ export default function MeetingPage() {
   const { updateState } = useAppContext();
   const [streamingContent, setStreamingContent] = useState("");
 
-  const [currentMeeting, setCurrentMeeting] = useState<Meeting | null>(null);
+  const [currentMeeting, setCurrentMeeting] =
+    useState<MeetingWithTranscript | null>(null);
 
   useEffect(() => {
     const fetchMeeting = async () => {
@@ -36,7 +42,9 @@ export default function MeetingPage() {
       if (error) {
         console.error("Error fetching meeting", error);
       } else {
-        setCurrentMeeting(data);
+        const transcript =
+          (JSON.parse(data.transcript as string) as TranscriptItem[]) || [];
+        setCurrentMeeting({ ...data, transcript });
       }
       editorRef.current?.commands.setContent(data?.notes || "");
       updateState({ isLoading: false });
@@ -72,7 +80,10 @@ export default function MeetingPage() {
     try {
       const res = await sendTextPrompt(
         {
-          meeting: currentMeeting,
+          meeting: {
+            ...currentMeeting,
+            transcript: JSON.stringify(currentMeeting.transcript),
+          },
           type: "summary",
           note: currentMeeting.notes?.toString() || "",
           chatQuestion: "",
@@ -107,7 +118,7 @@ export default function MeetingPage() {
     console.log("GETTING MEETING INFO", currentMeeting);
     if (!currentMeeting) return;
     const res = await getTitle(
-      currentMeeting.transcript || "",
+      JSON.stringify(currentMeeting.transcript),
       notes || currentMeeting?.notes || "",
       currentMeeting.title || "",
       currentMeeting.description || "",
@@ -160,7 +171,7 @@ export default function MeetingPage() {
         />
         <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2">
           <TranscriptPopover
-            transcript={currentMeeting?.transcript || ""}
+            transcript={currentMeeting?.transcript || []}
             setTranscript={(callback) => {
               setCurrentMeeting((prev) =>
                 prev
