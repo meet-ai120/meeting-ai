@@ -9,6 +9,7 @@ export function addWindowEventListeners(mainWindow: BrowserWindow) {
   ipcMain.handle(WIN_MINIMIZE_CHANNEL, () => {
     mainWindow.minimize();
   });
+
   ipcMain.handle(WIN_MAXIMIZE_CHANNEL, () => {
     if (mainWindow.isMaximized()) {
       mainWindow.unmaximize();
@@ -16,6 +17,7 @@ export function addWindowEventListeners(mainWindow: BrowserWindow) {
       mainWindow.maximize();
     }
   });
+
   ipcMain.handle(WIN_CLOSE_CHANNEL, () => {
     mainWindow.close();
   });

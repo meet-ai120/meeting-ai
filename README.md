@@ -1,20 +1,8 @@
 ## TODO
 
+- Can't record if headphone is connected after opening app
 - Fix google signin
-- Do not show back button on homepage
-- Back button position in windows
-- Adjustable width, slider in mail section of shadcn
-- Fix logout, currently you have to be on the home page 
-- Apply rate limit to prevent abuse, create profile table and store limits for users
-
-- discuss data flow
-
 - Fix data storing, right now regularly invalidating queries. Make it so that meeting data is stored locally and only updates should be sent to DB. When error we can can refetch
-- Apply streaming text
-- Handle errors, especially audio transcription errors show neatly in UI
-- Language dropdown
-- Meeting title
-- 
 
 
 ## Day 1

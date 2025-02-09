@@ -1,8 +1,3 @@
-import {
-  closeWindow,
-  maximizeWindow,
-  minimizeWindow,
-} from "@/helpers/window_helpers";
 import React, { type ReactNode } from "react";
 import { Button } from "./ui/button";
 
@@ -14,6 +9,13 @@ import { Label } from "./ui/label";
 import { useRouter, useRouterState } from "@tanstack/react-router";
 import ToggleTheme from "./ToggleTheme";
 import { useAppContext } from "@/store/AppContext";
+import { isWindows } from "@/helpers/platform_helpers";
+import {
+  closeWindow,
+  maximizeWindow,
+  minimizeWindow,
+  shouldShowWindowControls,
+} from "@/helpers/window_helpers";
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -42,7 +44,7 @@ export default function DragWindowRegion() {
         )}
       </div>
       <div className="flex items-center space-x-4">
-        <div className="no-drag relative">
+        {/* <div className="no-drag relative">
           <Label htmlFor="search" className="sr-only">
             Search
           </Label>
@@ -52,16 +54,22 @@ export default function DragWindowRegion() {
             className="pl-8"
           />
           <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
-        </div>
-        {/* <ToggleTheme className="no-drag" /> */}
+        </div> */}
+        <ToggleTheme className="no-drag" />
 
         <UserNav className="no-drag" />
+        <WindowButtons />
       </div>
     </div>
   );
 }
 
 function WindowButtons() {
+  // Don't render window controls on platforms that handle them natively (like macOS)
+  if (!shouldShowWindowControls()) {
+    return null;
+  }
+
   return (
     <div className="flex">
       <button

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, desktopCapturer, session } from "electron";
-import registerListeners from "./helpers/ipc/listeners-register";
+import { addWindowEventListeners } from "./helpers/ipc/window/window-listeners";
+import { addThemeEventListeners } from "./helpers/ipc/theme/theme-listeners";
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
@@ -21,7 +22,11 @@ function createWindow() {
     },
     titleBarStyle: "hidden",
   });
-  registerListeners(mainWindow);
+
+  // Register window control listeners
+  addWindowEventListeners(mainWindow);
+  // Register theme listeners
+  addThemeEventListeners();
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);

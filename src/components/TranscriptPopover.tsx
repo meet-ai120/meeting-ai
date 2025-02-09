@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 const VAD_CONFIG = {
   redemptionFrames: 6,
   // positiveSpeechThreshold: 0.8,
-  // negativeSpeechThreshold: 0.5,
+  negativeSpeechThreshold: 0.6,
   // minSpeechFrames: 2,
 };
 
@@ -239,7 +239,6 @@ export default function TranscriptPopover({
     const text = await response.data.response;
     // setTranscript((prev) => text);
   };
-  console.log("TRANSCRIPT", transcript);
 
   return (
     <Popover>
