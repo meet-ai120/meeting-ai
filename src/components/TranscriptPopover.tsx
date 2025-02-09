@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Download, Mic, Square, Monitor } from "lucide-react";
 import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase } from "@/lib/supabase";
+import { MicVAD, utils } from "@ricky0123/vad-web";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
 //   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
@@ -12,6 +13,12 @@ import { supabase } from "@/lib/supabase";
 // ];
 
 // const messages = SAMPLE_TRANSCRIPT;
+const VAD_CONFIG = {
+  redemptionFrames: 6,
+  // positiveSpeechThreshold: 0.8,
+  // negativeSpeechThreshold: 0.5,
+  // minSpeechFrames: 2,
+};
 
 interface TranscriptPopoverProps {
   meetingId: number;
@@ -30,9 +37,11 @@ export default function TranscriptPopover({
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const screenRecorderRef = useRef<MediaRecorder | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const screenIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
+  const vadRef = useRef<MicVAD | null>(null);
+  const screenVadRef = useRef<MicVAD | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -61,23 +70,35 @@ export default function TranscriptPopover({
         audio: true,
         video: false,
       });
+      micStreamRef.current = micStream;
 
       const micRecorder = new MediaRecorder(micStream, {
         mimeType: "audio/webm",
       });
       mediaRecorderRef.current = micRecorder;
 
-      micRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          sendToTranscribe(event.data);
-        }
-      };
+      const myvad = await MicVAD.new({
+        stream: micStream,
+        onSpeechEnd: async (audio) => {
+          console.log("Mic speech ended");
+          const wavBuffer = utils.encodeWAV(audio);
+          const webmBlob = new Blob([wavBuffer], { type: "audio/webm" });
+          sendToTranscribe(webmBlob);
+        },
+        onSpeechStart: () => {
+          console.log("Mic speech started");
+        },
+        ...VAD_CONFIG,
+      });
+      vadRef.current = myvad;
+      myvad.start();
 
       // Start screen audio recording
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true,
       });
+      screenStreamRef.current = screenStream;
 
       const audioStream = new MediaStream(screenStream.getAudioTracks());
       const screenRecorder = new MediaRecorder(audioStream, {
@@ -85,28 +106,21 @@ export default function TranscriptPopover({
       });
       screenRecorderRef.current = screenRecorder;
 
-      screenRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          sendToTranscribe(event.data);
-        }
-      };
-
-      // Start both recorders
-      micRecorder.start();
-      screenRecorder.start();
-
-      // Set up intervals for both recorders
-      intervalRef.current = setInterval(() => {
-        micRecorder.requestData();
-        micRecorder.stop();
-        micRecorder.start();
-      }, 5000);
-
-      screenIntervalRef.current = setInterval(() => {
-        screenRecorder.requestData();
-        screenRecorder.stop();
-        screenRecorder.start();
-      }, 4000);
+      const screenVad = await MicVAD.new({
+        stream: audioStream,
+        onSpeechEnd: async (audio) => {
+          console.log("Screen speech ended");
+          const wavBuffer = utils.encodeWAV(audio);
+          const webmBlob = new Blob([wavBuffer], { type: "audio/webm" });
+          sendToTranscribe(webmBlob);
+        },
+        onSpeechStart: () => {
+          console.log("Screen speech started");
+        },
+        ...VAD_CONFIG,
+      });
+      screenVadRef.current = screenVad;
+      screenVad.start();
 
       // Stop video tracks since we don't need them
       screenStream.getVideoTracks().forEach((track) => track.stop());
@@ -124,35 +138,44 @@ export default function TranscriptPopover({
   };
 
   const stopRecording = () => {
-    // Stop microphone recording
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      mediaRecorderRef.current.requestData();
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream
-        .getTracks()
-        .forEach((track) => track.stop());
+    // Stop VAD instances
+    if (vadRef.current) {
+      vadRef.current.destroy();
+      vadRef.current = null;
+    }
+    if (screenVadRef.current) {
+      screenVadRef.current.destroy();
+      screenVadRef.current = null;
     }
 
-    // Stop screen recording
-    if (
-      screenRecorderRef.current &&
-      screenRecorderRef.current.state !== "inactive"
-    ) {
-      screenRecorderRef.current.stop();
-      screenRecorderRef.current.stream
-        .getTracks()
-        .forEach((track) => track.stop());
+    // Stop microphone recording and tracks
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
+      micStreamRef.current = null;
+    }
+    if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      mediaRecorderRef.current = null;
     }
 
-    // Clear all intervals
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+    // Stop screen recording and tracks
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
+      screenStreamRef.current = null;
     }
-    if (screenIntervalRef.current) {
-      clearInterval(screenIntervalRef.current);
+    if (screenRecorderRef.current) {
+      if (screenRecorderRef.current.state !== "inactive") {
+        screenRecorderRef.current.stop();
+      }
+      screenRecorderRef.current = null;
     }
 
     setIsRecording(false);
