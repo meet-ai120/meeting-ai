@@ -1,13 +1,25 @@
-import { app, BrowserWindow, desktopCapturer, session } from "electron";
+import {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  ipcMain,
+  session,
+} from "electron";
 // "electron-squirrel-startup" seems broken when packaging with vite
 //import started from "electron-squirrel-startup";
 import path from "path";
+import log from "electron-log";
+import { autoUpdater } from "electron-updater";
 
+log.transports.file.level = "info";
+autoUpdater.logger = log;
+
+let mainWindow;
 const inDevelopment = process.env.NODE_ENV === "development";
 
 function createWindow() {
   const preload = path.join(__dirname, "preload.js");
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 900,
     webPreferences: {
@@ -47,6 +59,9 @@ app.whenReady().then(() => {
     { useSystemPicker: true },
   );
   createWindow();
+
+  // Check for updates after startup
+  autoUpdater.checkForUpdatesAndNotify();
 });
 
 //osX only
@@ -62,3 +77,18 @@ app.on("activate", () => {
   }
 });
 //osX only ends
+
+// Listen for update events
+autoUpdater.on("update-available", () => {
+  mainWindow.webContents.send("update_available");
+});
+
+autoUpdater.on("update-downloaded", () => {
+  mainWindow.webContents.send("update_downloaded");
+});
+
+// Handle update installation
+// Handle update installation
+ipcMain.on("restart_app", () => {
+  autoUpdater.quitAndInstall();
+});
