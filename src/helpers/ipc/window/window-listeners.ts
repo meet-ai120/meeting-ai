@@ -7,6 +7,7 @@ import {
 
 export function addWindowEventListeners(mainWindow: BrowserWindow) {
   ipcMain.handle(WIN_MINIMIZE_CHANNEL, () => {
+    console.log("minimizing");
     mainWindow.minimize();
   });
 
@@ -19,6 +20,7 @@ export function addWindowEventListeners(mainWindow: BrowserWindow) {
   });
 
   ipcMain.handle(WIN_CLOSE_CHANNEL, () => {
+    console.log("closing");
     mainWindow.close();
   });
 }

@@ -66,12 +66,12 @@ export default function DragWindowRegion() {
 
 function WindowButtons() {
   // Don't render window controls on platforms that handle them natively (like macOS)
-  if (!shouldShowWindowControls()) {
-    return null;
-  }
+  // if (!shouldShowWindowControls()) {
+  //   return null;
+  // }
 
   return (
-    <div className="flex">
+    <div className="no-drag flex">
       <button
         title="Minimize"
         type="button"
