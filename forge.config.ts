@@ -9,10 +9,7 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { PublisherGithub } from "@electron-forge/publisher-github";
 
 const config: ForgeConfig = {
-  packagerConfig: {
-    executableName: "electron-shadcn",
-    asar: true,
-  },
+  packagerConfig: { executableName: "electron-shadcn", asar: true },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}, ["win32"]),
@@ -22,10 +19,7 @@ const config: ForgeConfig = {
   ],
   publishers: [
     new PublisherGithub({
-      repository: {
-        owner: "meet-ai120",
-        name: "meeting-ai",
-      },
+      repository: { owner: "meet-ai120", name: "meeting-ai" },
       draft: false,
       prerelease: true,
     }),
@@ -40,17 +34,9 @@ const config: ForgeConfig = {
           entry: "src/main.ts",
           config: "vite.main.config.ts",
         },
-        {
-          entry: "src/preload.ts",
-          config: "vite.preload.config.ts",
-        },
+        { entry: "src/preload.ts", config: "vite.preload.config.ts" },
       ],
-      renderer: [
-        {
-          name: "main_window",
-          config: "vite.renderer.config.ts",
-        },
-      ],
+      renderer: [{ name: "main_window", config: "vite.renderer.config.ts" }],
     }),
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
