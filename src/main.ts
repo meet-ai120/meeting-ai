@@ -14,7 +14,7 @@ import { autoUpdater } from "electron-updater";
 log.transports.file.level = "info";
 autoUpdater.logger = log;
 
-let mainWindow;
+let mainWindow: BrowserWindow | null = null;
 const inDevelopment = process.env.NODE_ENV === "development";
 
 function createWindow() {
@@ -30,13 +30,32 @@ function createWindow() {
 
       preload: preload,
     },
-    titleBarStyle: "hidden",
+    titleBarStyle: process.platform === "darwin" ? "hidden" : "default",
+    frame: process.platform === "darwin",
+  });
+
+  // Handle window control IPC events
+  ipcMain.handle("window:minimize", () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.handle("window:maximize", () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.handle("window:close", () => {
+    mainWindow?.close();
   });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    mainWindow?.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(
+    mainWindow?.loadFile(
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
@@ -80,11 +99,11 @@ app.on("activate", () => {
 
 // Listen for update events
 autoUpdater.on("update-available", () => {
-  mainWindow.webContents.send("update_available");
+  mainWindow?.webContents.send("update_available");
 });
 
 autoUpdater.on("update-downloaded", () => {
-  mainWindow.webContents.send("update_downloaded");
+  mainWindow?.webContents.send("update_downloaded");
 });
 
 // Handle update installation

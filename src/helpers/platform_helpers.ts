@@ -15,7 +15,7 @@ export enum Platform {
  * Check if the app is running in an Electron environment
  */
 export const isElectron = (): boolean => {
-  return window?.process?.type === "renderer" || "electron" in window;
+  return window?.process?.type === "renderer";
 };
 
 /**
