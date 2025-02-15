@@ -1,7 +1,7 @@
 {
   "name": "Meeting AI",
   "productName": "Meeting AI",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Electron Forge with shadcn-ui (Vite + Typescript)",
   "main": ".vite/build/main.js",
   "private": true,

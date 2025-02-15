@@ -1,5 +1,6 @@
 import React, { type ReactNode } from "react";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 
 import { toggleTheme } from "@/helpers/theme_helpers";
 import { Input } from "./ui/input";
@@ -39,11 +40,16 @@ export default function DragWindowRegion() {
             >
               <ChevronLeft size="sm" />
             </Button>
-            <h1 className="text-lg font-bold">{title}</h1>
+            <h1 className="flex items-center gap-2 text-lg font-bold">
+              {title}
+            </h1>
           </>
         )}
       </div>
       <div className="flex items-center space-x-4">
+        <Badge className="border-none bg-orange-500 text-xs text-white hover:bg-orange-600">
+          Test Release
+        </Badge>
         {/* <div className="no-drag relative">
           <Label htmlFor="search" className="sr-only">
             Search
