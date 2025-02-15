@@ -9,7 +9,10 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { PublisherGithub } from "@electron-forge/publisher-github";
 
 const config: ForgeConfig = {
-  packagerConfig: { executableName: "electron-shadcn", asar: true },
+  packagerConfig: {
+    executableName: "electron-shadcn",
+    asar: true,
+  },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}, ["win32"]),

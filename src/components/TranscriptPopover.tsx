@@ -6,6 +6,13 @@ import { sendAudio, sendToCorrection } from "@/lib/server";
 import { supabase, TranscriptItem } from "@/lib/supabase";
 import { MicVAD, utils } from "@ricky0123/vad-web";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 // const messages = [
 //   "The funny thing is I didn't unfollow Elon at all. ",
 //   "One of the headlines was that Marques and Elon unfollowed each other on Twitter. I woke up to find that my account had unfollowed. What? What I assume happened was you know, how you can, like, block and unblock sort of soft unfollow so they don't know that they unfollow you? Does that force them to unfollow you? Yeah. If you block someone, they can't follow you anymore. ",
@@ -31,6 +38,21 @@ interface TranscriptPopoverProps {
   ) => void;
 }
 
+const Languages = [
+  {
+    name: "English",
+    value: "en",
+  },
+  {
+    name: "Uzbek",
+    value: "uz",
+  },
+  {
+    name: "Russian",
+    value: "ru",
+  },
+];
+
 export default function TranscriptPopover({
   meetingId,
   onEnhance,
@@ -38,6 +60,7 @@ export default function TranscriptPopover({
   setTranscript,
 }: TranscriptPopoverProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const screenRecorderRef = useRef<MediaRecorder | null>(null);
   const isRecordingRef = useRef(false);
@@ -77,9 +100,7 @@ export default function TranscriptPopover({
     try {
       // Start microphone recording
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-        },
+        audio: true,
         video: false,
       });
       micStreamRef.current = micStream;
@@ -214,7 +235,7 @@ export default function TranscriptPopover({
     const formData = new FormData();
     formData.append("audio", audioFile);
 
-    const response = await sendAudio(formData);
+    const response = await sendAudio(formData, selectedLanguage);
     const data = await response.data;
     console.log("Is recording", isRecordingRef.current);
     setTranscript((prev) => {
@@ -242,10 +263,25 @@ export default function TranscriptPopover({
     // setTranscript((prev) => text);
   };
 
+  console.log(selectedLanguage);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <div className="flex items-center gap-2">
+          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {Languages.map((lang) => (
+                <SelectItem key={lang.value} value={lang.value}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button
             onClick={handleRecord}
             variant={isRecording ? "destructive" : undefined}

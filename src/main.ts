@@ -6,7 +6,7 @@ import {
   session,
 } from "electron";
 // "electron-squirrel-startup" seems broken when packaging with vite
-//import started from "electron-squirrel-startup";
+// import started from "electron-squirrel-startup";
 import path from "path";
 import log from "electron-log";
 import { autoUpdater } from "electron-updater";

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { supabase, TextPromptBody } from "./supabase";
 
-const SERVER_URL = "http://161.35.197.89:8080";
+const SERVER_URL = "http://localhost:8080";
 
 const server = axios.create({
   baseURL: SERVER_URL,
@@ -56,10 +56,10 @@ export const sendTextPrompt = async (
   }
 };
 
-export const sendAudio = async (body: FormData) => {
+export const sendAudio = async (body: FormData, language: string) => {
   const session = await supabase.auth.getSession();
   const token = session.data.session?.access_token;
-  return server.post("/audio", body, {
+  return server.post("/audio?language=" + language, body, {
     headers: {
       Authorization: `${token}`,
     },

@@ -20,7 +20,9 @@ export default defineConfig((env) => {
         formats: ["cjs"],
       },
       rollupOptions: {
-        external,
+        external: external.filter(
+          (dep) => !["electron-log", "electron-updater"].includes(dep),
+        ),
       },
     },
     plugins: [pluginHotRestart("restart")],
