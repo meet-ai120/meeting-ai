@@ -1,7 +1,7 @@
 import axios from "axios";
 import { supabase, TextPromptBody } from "./supabase";
 
-const SERVER_URL = "http://localhost:8080";
+const SERVER_URL = "http://161.35.197.89:8080";
 
 const server = axios.create({
   baseURL: SERVER_URL,

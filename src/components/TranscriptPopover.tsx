@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Download, Mic, Square, Monitor } from "lucide-react";
@@ -215,40 +215,39 @@ export default function TranscriptPopover({
     isRecordingRef.current = false;
   };
 
-  const sendToTranscribe = async (
-    blob: Blob,
-    timestamp: number,
-    source: TranscriptItem["source"],
-  ) => {
-    console.log("SENDING TO TRANSCRIBE");
-    const newBlob = new Blob([blob], {
-      type: "audio/webm; codecs=opus",
-    });
-    const audioFile = new File(
-      [newBlob],
-      `audio-${new Date().getTime()}.webm`,
-      {
-        type: "audio/webm",
-      },
-    );
-
-    const formData = new FormData();
-    formData.append("audio", audioFile);
-
-    const response = await sendAudio(formData, selectedLanguage);
-    const data = await response.data;
-    console.log("Is recording", isRecordingRef.current);
-    setTranscript((prev) => {
-      return [
-        ...prev,
+  const sendToTranscribe = useCallback(
+    async (blob: Blob, timestamp: number, source: TranscriptItem["source"]) => {
+      console.log("SENDING TO TRANSCRIBE with language:", selectedLanguage);
+      const newBlob = new Blob([blob], {
+        type: "audio/webm; codecs=opus",
+      });
+      const audioFile = new File(
+        [newBlob],
+        `audio-${new Date().getTime()}.webm`,
         {
-          content: data.text,
-          source,
-          timestamp,
+          type: "audio/webm",
         },
-      ];
-    });
-  };
+      );
+
+      const formData = new FormData();
+      formData.append("audio", audioFile);
+
+      const response = await sendAudio(formData, selectedLanguage);
+      const data = await response.data;
+      console.log("Is recording", isRecordingRef.current);
+      setTranscript((prev) => {
+        return [
+          ...prev,
+          {
+            content: data.text,
+            source,
+            timestamp,
+          },
+        ];
+      });
+    },
+    [selectedLanguage, setTranscript],
+  );
 
   useEffect(() => {
     return () => {
